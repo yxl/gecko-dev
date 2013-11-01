@@ -20,6 +20,9 @@ namespace dom {
 class AbortableProgressPromise;
 class CreateFileOptions;
 class EventStream;
+class FilesystemBase;
+class FilesystemFile;
+class FilesystemWeakRef;
 class OpenWriteOptions;
 class Promise;
 class StringOrDirectoryOrDestinationDict;
@@ -34,7 +37,9 @@ public:
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Directory)
 
 public:
-  Directory();
+  static already_AddRefed<Promise> GetRoot(FilesystemBase* aFilesystem);
+
+  Directory(FilesystemBase* aFilesystem, FilesystemFile* aFile);
   ~Directory();
 
   // ========= Begin WebIDL bindings. ===========
@@ -69,6 +74,15 @@ public:
   already_AddRefed<EventStream> EnumerateDeep(const Optional<nsAString >& path);
 
   // =========== End WebIDL bindings.============
+private:
+  /*
+   * Convert relative DOM path to the absolute real path.
+   * @return true if succeed. false if the DOM path is invalid.
+   */
+  bool DOMPathToRealPath(const nsAString& aPath, nsAString& aRealPath);
+
+  nsAutoPtr<FilesystemWeakRef> mFilesystem;
+  nsRefPtr<FilesystemFile> mFile;
 };
 
 } // namespace dom

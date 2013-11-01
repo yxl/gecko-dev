@@ -5,16 +5,33 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS.mozilla.dom += [
+    'DeviceStorageFilesystem.h',
     'Directory.h',
     'EventStream.h',
+    'FilesystemBase.h',
+    'FilesystemRequestParent.h',
+    'FilesystemUtils.h',
+    'TaskBase.h',
 ]
 
 SOURCES += [
+    'CreateDirectoryTask.cpp',
+    'DeviceStorageFilesystem.cpp',
     'Directory.cpp',
     'EventStream.cpp',
+    'FilesystemBase.cpp',
+    'FilesystemFile.cpp',
+    'FilesystemRequestParent.cpp',
+    'FilesystemUtils.cpp',
+    'GetFileOrDirectoryTask.cpp',
+    'TaskBase.cpp',
 ]
 
 FINAL_LIBRARY = 'gklayout'
+
+IPDL_SOURCES += [
+    'PFilesystemRequest.ipdl',
+]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

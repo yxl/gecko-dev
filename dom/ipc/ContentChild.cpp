@@ -103,6 +103,8 @@
 #include "mozilla/dom/indexedDB/PIndexedDBChild.h"
 #include "mozilla/dom/mobilemessage/SmsChild.h"
 #include "mozilla/dom/devicestorage/DeviceStorageRequestChild.h"
+#include "mozilla/dom/PFilesystemRequestChild.h"
+#include "mozilla/dom/TaskBase.h"
 #include "mozilla/dom/bluetooth/PBluetoothChild.h"
 #include "mozilla/dom/PFMRadioChild.h"
 #include "mozilla/ipc/InputStreamUtils.h"
@@ -231,7 +233,7 @@ ConsoleListener::Observe(nsIConsoleMessage* aMessage)
 {
     if (!mChild)
         return NS_OK;
-    
+
     nsCOMPtr<nsIScriptError> scriptError = do_QueryInterface(aMessage);
     if (scriptError) {
         nsString msg, sourceName, sourceLine;
@@ -920,6 +922,24 @@ ContentChild::DeallocPDeviceStorageRequestChild(PDeviceStorageRequestChild* aDev
     return true;
 }
 
+PFilesystemRequestChild*
+ContentChild::AllocPFilesystemRequestChild(const FilesystemParams& aParams)
+{
+    NS_NOTREACHED("Should never get here!");
+    return nullptr;
+}
+
+bool
+ContentChild::DeallocPFilesystemRequestChild(PFilesystemRequestChild* aFilesystem)
+{
+    mozilla::dom::TaskBase* child =
+      static_cast<mozilla::dom::TaskBase*>(aFilesystem);
+    // The reference is increased in TaskBase::Start of TaskBase.cpp. We should
+    // decrease it after IPC.
+    NS_RELEASE(child);
+    return true;
+}
+
 PNeckoChild*
 ContentChild::AllocPNeckoChild()
 {
@@ -1233,7 +1253,7 @@ ContentChild::RecvAddPermission(const IPC::Permission& permission)
       do_GetService(NS_PERMISSIONMANAGER_CONTRACTID);
   nsPermissionManager* permissionManager =
       static_cast<nsPermissionManager*>(permissionManagerIface.get());
-  NS_ABORT_IF_FALSE(permissionManager, 
+  NS_ABORT_IF_FALSE(permissionManager,
                    "We have no permissionManager in the Content process !");
 
   nsCOMPtr<nsIURI> uri;
