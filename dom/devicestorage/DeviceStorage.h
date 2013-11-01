@@ -31,6 +31,7 @@ class DeviceStorageEnumerationParameters;
 class DOMCursor;
 class DOMRequest;
 class Promise;
+class DeviceStorageFilesystem;
 } // namespace dom
 } // namespace mozilla
 
@@ -151,6 +152,7 @@ class nsDOMDeviceStorage MOZ_FINAL
   typedef mozilla::dom::DOMCursor DOMCursor;
   typedef mozilla::dom::DOMRequest DOMRequest;
   typedef mozilla::dom::Promise Promise;
+  typedef mozilla::dom::DeviceStorageFilesystem DeviceStorageFilesystem;
 public:
   typedef nsTArray<nsString> VolumeNameArray;
 
@@ -246,7 +248,8 @@ public:
 
   // Uses XPCOM GetStorageName
 
-  already_AddRefed<Promise> GetRoot();
+  already_AddRefed<Promise>
+  GetRoot();
 
   static void
   CreateDeviceStorageFor(nsPIDOMWindow* aWin,
@@ -324,6 +327,8 @@ private:
       DEVICE_STORAGE_TYPE_SHARED,
       DEVICE_STORAGE_TYPE_EXTERNAL
   };
+
+  nsRefPtr<DeviceStorageFilesystem> mFilesystem;
 };
 
 #endif

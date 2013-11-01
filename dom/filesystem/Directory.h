@@ -17,6 +17,8 @@
 namespace mozilla {
 namespace dom {
 
+class FilesystemBase;
+class FilesystemWeakRef;
 class Promise;
 
 class Directory MOZ_FINAL
@@ -28,7 +30,10 @@ public:
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Directory)
 
 public:
-  Directory();
+  static already_AddRefed<Promise>
+  GetRoot(FilesystemBase* aFilesystem);
+
+  Directory(FilesystemBase* aFilesystem, const nsAString& aPath);
   ~Directory();
 
   // ========= Begin WebIDL bindings. ===========
@@ -49,6 +54,19 @@ public:
   Get(const nsAString& aPath);
 
   // =========== End WebIDL bindings.============
+private:
+  static bool
+  IsValidRelativePath(const nsString& aPath);
+
+  /*
+   * Convert relative DOM path to the absolute real path.
+   * @return true if succeed. false if the DOM path is invalid.
+   */
+  bool
+  DOMPathToRealPath(const nsAString& aPath, nsAString& aRealPath) const;
+
+  nsAutoPtr<FilesystemWeakRef> mFilesystem;
+  nsString mPath;
 };
 
 } // namespace dom
