@@ -18,6 +18,8 @@
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/Directory.h"
+#include "mozilla/dom/FilesystemUtils.h"
+#include "mozilla/dom/DeviceStorageFilesystem.h"
 #include "mozilla/LazyIdleThread.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
@@ -881,14 +883,7 @@ DeviceStorageFile::IsSafePath(const nsAString& aPath)
 
 void
 DeviceStorageFile::NormalizeFilePath() {
-#if defined(XP_WIN)
-  char16_t* cur = mPath.BeginWriting();
-  char16_t* end = mPath.EndWriting();
-  for (; cur < end; ++cur) {
-    if (char16_t('\\') == *cur)
-      *cur = char16_t('/');
-  }
-#endif
+  FilesystemUtils::LocalPathToNormalizedPath(mPath, mPath);
 }
 
 void
@@ -896,23 +891,9 @@ DeviceStorageFile::AppendRelativePath(const nsAString& aPath) {
   if (!mFile) {
     return;
   }
-#if defined(XP_WIN)
-  // replace forward slashes with backslashes,
-  // since nsLocalFileWin chokes on them
-  nsString temp;
-  temp.Assign(aPath);
-
-  char16_t* cur = temp.BeginWriting();
-  char16_t* end = temp.EndWriting();
-
-  for (; cur < end; ++cur) {
-    if (char16_t('/') == *cur)
-      *cur = char16_t('\\');
-  }
-  mFile->AppendRelativePath(temp);
-#else
-  mFile->AppendRelativePath(aPath);
-#endif
+  nsString localPath;
+  FilesystemUtils::NormalizedPathToLocalPath(aPath, localPath);
+  mFile->AppendRelativePath(localPath);
 }
 
 nsresult
@@ -3220,7 +3201,11 @@ nsDOMDeviceStorage::Default()
 already_AddRefed<Promise>
 nsDOMDeviceStorage::GetRoot()
 {
-  return nullptr;
+  if (!mFilesystem) {
+    mFilesystem = new DeviceStorageFilesystem(mStorageType, mStorageName,
+                                              GetOwner());
+  }
+  return mozilla::dom::Directory::GetRoot(mFilesystem);
 }
 
 NS_IMETHODIMP
