@@ -334,6 +334,9 @@ private:
     virtual PDeviceStorageRequestParent* AllocPDeviceStorageRequestParent(const DeviceStorageParams&);
     virtual bool DeallocPDeviceStorageRequestParent(PDeviceStorageRequestParent*);
 
+    virtual PFilesystemRequestParent* AllocPFilesystemRequestParent(const FilesystemParams&);
+    virtual bool DeallocPFilesystemRequestParent(PFilesystemRequestParent*);
+
     virtual PBlobParent* AllocPBlobParent(const BlobConstructorParams& aParams);
     virtual bool DeallocPBlobParent(PBlobParent*);
 

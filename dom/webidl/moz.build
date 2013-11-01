@@ -15,6 +15,7 @@ PREPROCESSED_WEBIDL_FILES = [
 ]
 
 WEBIDL_FILES = [
+    'AbortableProgressPromise.webidl',
     'AbstractWorker.webidl',
     'AnalyserNode.webidl',
     'AnimationEvent.webidl',
@@ -57,6 +58,7 @@ WEBIDL_FILES = [
     'Contacts.webidl',
     'ConvolverNode.webidl',
     'Coordinates.webidl',
+    'CreateFileOptions.webidl',
     'CSS.webidl',
     'CSSPrimitiveValue.webidl',
     'CSSStyleDeclaration.webidl',
@@ -70,6 +72,7 @@ WEBIDL_FILES = [
     'DesktopNotification.webidl',
     'DeviceMotionEvent.webidl',
     'DeviceStorage.webidl',
+    'Directory.webidl',
     'Document.webidl',
     'DocumentFragment.webidl',
     'DocumentType.webidl',

@@ -25,8 +25,8 @@ class PromiseCallback;
 class PromiseInit;
 class PromiseNativeHandler;
 
-class Promise MOZ_FINAL : public nsISupports,
-                          public nsWrapperCache
+class Promise : public nsISupports,
+                public nsWrapperCache
 {
   friend class NativePromiseCallback;
   friend class PromiseResolverMixin;
@@ -43,7 +43,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Promise)
 
   Promise(nsPIDOMWindow* aWindow);
-  ~Promise();
+  virtual ~Promise();
 
   static bool EnabledForScope(JSContext* aCx, JSObject* /* unused */);
 
