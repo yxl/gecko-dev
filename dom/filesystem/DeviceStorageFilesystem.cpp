@@ -10,6 +10,7 @@
 #include "DeviceStorage.h"
 #include "nsCOMPtr.h"
 #include "nsDebug.h"
+#include "nsIDOMFile.h"
 #include "nsIFile.h"
 #include "nsPIDOMWindow.h"
 
@@ -76,6 +77,30 @@ DeviceStorageFilesystem::GetLocalFile(const nsAString& aRealPath) const
     return nullptr;
   }
   return file.forget();
+}
+
+bool
+DeviceStorageFilesystem::GetRealPath(nsIDOMFile *aFile, nsAString& aRealPath) const
+{
+  MOZ_ASSERT(FilesystemUtils::IsParentProcess(),
+             "Should be on parent process!");
+  MOZ_ASSERT(aFile, "aFile Should not be null.");
+
+  aRealPath.Truncate();
+
+  nsAutoString localPath;
+  if (NS_FAILED(aFile->GetMozFullPathInternal(localPath))) {
+    return false;
+  }
+
+  if (!StringBeginsWith(localPath, mLocalRootPath)) {
+    return false;
+  }
+
+  localPath  = Substring(localPath, mLocalRootPath.Length());
+  FilesystemUtils::LocalPathToNormalizedPath(localPath, aRealPath);
+
+  return true;
 }
 
 const nsAString&

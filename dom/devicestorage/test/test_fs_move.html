@@ -1,0 +1,184 @@
+<!--
+  Any copyright is dedicated to the Public Domain.
+  http://creativecommons.org/publicdomain/zero/1.0/
+-->
+<!DOCTYPE HTML>
+<html> <!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=935883
+-->
+<head>
+  <title>Test move of the Filesystem API for device storage</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="devicestorage_common.js"></script>
+
+<link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=935883">Mozilla Bug 935883</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+</div>
+<pre id="test">
+<script class="testbody" type="text/javascript">
+
+devicestorage_setup();
+createTestFiles();
+
+function createTestFiles() {
+  // ensure that the directory we are writing into is empty
+  try {
+    const Cc = SpecialPowers.Cc;
+    const Ci = SpecialPowers.Ci;
+    const Cu = SpecialPowers.Cu;
+    const nsIFile = Ci.nsIFile;
+    var directoryService = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties);
+    var dir = directoryService.get("TmpD", nsIFile);
+    ["device-storage-testing", "sub1", "sub2"].forEach(function(path) {
+      dir.append(path);
+    });
+    dir.create(nsIFile.DIRECTORY_TYPE, 0755);
+
+    // Create a file under root
+    var file = directoryService.get("TmpD", Ci.nsIFile);
+    ["device-storage-testing", "test.txt"].forEach(function(path) {
+      file.append(path);
+    });
+    file.create(nsIFile.NORMAL_FILE_TYPE, 0644);
+  } catch(e) {
+    ok(false, "Should not arrive here. Error: " + SpecialPowers.wrap(e));
+  }
+}
+
+// The root directory object.
+var gRoot;
+var gSub1;
+var gSub2;
+var gTestCount = 0;
+var gPath = '/';
+var gName = '';
+
+function testMove(dir, src, dest) {
+  dir.move(src, dest).then(moveSuccess, cbError);
+}
+
+function moveSuccess(d) {
+  // Get the new created directory from the root.
+  gRoot.get(gPath).then(getSuccess, cbError);
+}
+
+function getSuccess(r) {
+  ok(r, "[" + gTestCount +"] Should get the file - " + gPath + ".");
+  switch (gTestCount) {
+    case 0:
+      gRoot = r;
+      // Rename test.txt to renamed.txt
+      gName = gPath = "renamed.txt";
+      testMove(gRoot, "test.txt", gName);
+      break;
+    case 1:
+      // Rename renamed.txt back to test.txt
+      gName = gPath = "test.txt";
+      testMove(gRoot, r, gName);
+      break;
+    case 2:
+      // Move test.txt to sub1
+      gName = "test.txt";
+      gPath = "sub1/test.txt";
+      testMove(gRoot, gName, gPath);
+      break;
+    case 3:
+      // Get sub1/sub2
+      gName = "sub2";
+      gPath = "sub1/sub2";
+      gRoot.get(gPath).then(getSuccess, cbError);
+      break;
+    case 4:
+      gSub2 = r;
+      // Move sub1/test.txt to sub1/sub2
+      gName = "test.txt";
+      gPath = "sub1/sub2/test.txt";
+      testMove(gRoot, "sub1/test.txt", gSub2);
+      break;
+    case 5:
+      // Rename sub1/sub2/text.txt to sub1/sub2/renamed.txt
+      gName = "renamed.txt";
+      gPath = "sub1/sub2/renamed.txt";
+      testMove(gSub2, "test.txt", { dir: gSub2, name: gName });
+      break;
+    case 6:
+      // Move sub1/sub2 to root/sub2_moved
+      gName = "sub2_moved";
+      gPath = "sub2_moved";
+      testMove(gRoot, gSub2, gName);
+      break;
+    case 7:
+      // Get sub1
+      gName = "sub1";
+      gPath = "sub1";
+      gRoot.get(gPath).then(getSuccess, cbError);
+      break;
+    case 8:
+      gSub1 = r;
+      // Get sub2_moved
+      gName = "sub2_moved";
+      gPath = "sub2_moved";
+      gRoot.get(gPath).then(getSuccess, cbError);
+      break;
+    case 9:
+      gSub2 = r;
+      gSub1.move(gSub2, "sub2").then(function(what) {
+        ok(false, "Should not move a non-descendant directory.");
+        devicestorage_cleanup();
+      }, function(e) {
+        ok(true, "Moving a non-descendant directory should fail.");
+
+        // Move sub2_moved to sub1 and rename to sub2
+        gName = "sub2";
+        gPath = "sub1/"+ gName;
+        testMove(gRoot, gSub2, { dir: gSub1, name: gName });
+      });
+      break;
+    default:
+      // Set the source and destination as the same.
+      gRoot.move(gRoot, "sub1/sub2", { dir: gSub1, name: "sub2" })
+           .then(function(what) {
+        ok(false, "Should not move an entry to itself.");
+        devicestorage_cleanup();
+      }, function(e) {
+        ok(true, "Moving an entry to itself should fail.");
+        devicestorage_cleanup();
+      });
+      // Move sub1 into its descendant directory.
+      gRoot.move(gRoot, "sub1", { dir: gSub1, name: "sub2" })
+           .then(function(what) {
+        ok(false, "Should not move a directory into its descendant.");
+        devicestorage_cleanup();
+      }, function(e) {
+        ok(true, "Moving an entry into its descendant should fail.");
+      });
+      break;
+      break;
+  }
+  gTestCount++;
+}
+
+function cbError(e) {
+  ok(false, "Should not arrive here! Error: " + e.name);
+  devicestorage_cleanup();
+}
+
+ok(navigator.getDeviceStorage, "Should have getDeviceStorage.");
+
+var storage = navigator.getDeviceStorage("pictures");
+ok(storage, "Should have gotten a storage.");
+
+var promise = storage.getRoot();
+ok(promise, "Should have a non-null promise for getRoot.");
+
+gName = storage.storageName;
+promise.then(getSuccess, cbError);
+</script>
+</pre>
+</body>
+</html>
+

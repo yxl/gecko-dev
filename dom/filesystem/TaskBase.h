@@ -15,9 +15,11 @@
 namespace mozilla {
 namespace dom {
 
+class AbortableProgressPromise;
 class FilesystemBase;
 class FilesystemCreateDirectoryParams;
 class FilesystemGetFileOrDirectoryParams;
+class FilesystemMoveParams;
 class FilesystemParams;
 class Promise;
 
@@ -134,6 +136,19 @@ public:
                               const FilesystemGetFileOrDirectoryParams& aParam,
                               FilesystemRequestParent* aParent);
 
+  static already_AddRefed<AbortableProgressPromise>
+  StartMoveTask(FilesystemBase* aFilesystem,
+                const nsAString& aSrcPath,
+                nsIDOMFile* aSrcFile,
+                const nsAString& aDestDirectory,
+                const nsAString& aDestName,
+                nsresult aErrorValue);
+
+  static void
+  StartMoveTask(FilesystemBase* aFilesystem,
+                const FilesystemMoveParams& aParam,
+                FilesystemRequestParent* aParent);
+
   NS_DECL_NSIRUNNABLE
 protected:
   /*
@@ -216,6 +231,9 @@ protected:
   // Overrides PFilesystemRequestChild
   virtual bool
   Recv__delete__(const FilesystemResponseValue& value) MOZ_OVERRIDE;
+
+  virtual bool
+  RecvNotifyProgress(const nsString& value) MOZ_OVERRIDE;
 
   nsresult mErrorValue;
 

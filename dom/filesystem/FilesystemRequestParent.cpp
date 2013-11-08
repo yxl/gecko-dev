@@ -45,12 +45,24 @@ FilesystemRequestParent::Dispatch()
       break;
     }
 
+    case FilesystemParams::TFilesystemMoveParams: {
+      FilesystemMoveParams& p = mParams;
+      mFilesystem = FilesystemBase::FromString(p.filesystem());
+      MOZ_ASSERT(mFilesystem, "Filesystem should not be null.");
+      TaskBase::StartMoveTask(mFilesystem, p, this);
+      break;
+    }
     default: {
       NS_RUNTIMEABORT("not reached");
       break;
     }
 
   }
+}
+
+bool FilesystemRequestParent::RecvAbort()
+{
+  return true;
 }
 
 } // namespace dom

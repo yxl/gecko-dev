@@ -12,6 +12,7 @@
 #include "nsString.h"
 
 class nsPIDOMWindow; // You need |#include "nsPIDOMWindow.h"| in CPP files.
+class nsIDOMFile; // You need |#include "nsIDOMFile.h"| in CPP files.
 
 namespace mozilla {
 namespace dom {
@@ -49,6 +50,14 @@ public:
    */
   virtual already_AddRefed<nsIFile>
   GetLocalFile(const nsAString& aRealPath) const = 0;
+
+  /*
+   * Get the real path (absolute DOM path) of the DOM file in the file system.
+   * If succeeded, returns true. Otherwise, returns false and set aRealPath to
+   * empty string.
+   */
+  virtual bool
+  GetRealPath(nsIDOMFile *aFile, nsAString& aRealPath) const = 0;
 
   /*
    * Get the virtual name of the root directory. This name will be exposed to

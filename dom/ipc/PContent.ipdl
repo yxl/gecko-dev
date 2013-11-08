@@ -176,9 +176,24 @@ struct FilesystemGetFileOrDirectoryParams
   nsString realPath;
 };
 
+union FilesystemSourceParam 
+{
+  nsString;
+  PBlob;
+};
+
+struct FilesystemMoveParams
+{
+  nsString filesystem;
+  FilesystemSourceParam src;
+  nsString destDirectory;
+  nsString destName;
+};
+
 union FilesystemParams
 {
   FilesystemCreateDirectoryParams;
+  FilesystemMoveParams;
   FilesystemGetFileOrDirectoryParams;
 };
 

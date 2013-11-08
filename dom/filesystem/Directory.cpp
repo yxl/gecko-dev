@@ -16,6 +16,7 @@
 
 #include "mozilla/dom/AbortableProgressPromise.h"
 #include "mozilla/dom/DirectoryBinding.h"
+#include "mozilla/dom/UnionTypes.h"
 
 namespace mozilla {
 namespace dom {
@@ -117,8 +118,84 @@ already_AddRefed<AbortableProgressPromise>
 Directory::Move(const StringOrFileOrDirectory& aPath,
                 const StringOrDirectoryOrDestinationDict& aDest)
 {
-  // TODO
-  return nullptr;
+  nsresult error = NS_OK;
+  nsString srcPath;
+  nsCOMPtr<nsIDOMFile> srcFile;
+  nsAutoString destDirectory;
+  nsAutoString destName;
+  nsString destPath;
+
+  // Check and get the source path.
+
+  if (aPath.IsFile()) {
+    srcFile = aPath.GetAsFile();
+  } else {
+    if (aPath.IsString()) {
+      if (!DOMPathToRealPath(aPath.GetAsString(), srcPath)) {
+        error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
+        goto parameters_check_done;
+      }
+    } else {
+      if (!GetSubDirectoryRealPath(aPath.GetAsDirectory(), srcPath)) {
+        error = NS_ERROR_DOM_FILESYSTEM_NO_MODIFICATION_ALLOWED_ERR;
+        goto parameters_check_done;
+      }
+    }
+    // By default the destination name should be the same with that of the
+    // source.
+    destName = Substring(srcPath,
+      srcPath.RFindChar(FilesystemUtils::kSeparatorChar) + 1);
+  }
+
+  // Check and get the destination path.
+
+  if (aDest.IsDirectory()) {
+    Directory& dir = aDest.GetAsDirectory();
+    destDirectory = dir.mPath;
+    destPath = destDirectory +
+               NS_LITERAL_STRING(FILESYSTEM_DOM_PATH_SEPARATOR) +
+               destName;
+  } else {
+    const Directory* pDestParent = nullptr;
+
+    if (aDest.IsString()) {
+      pDestParent = this;
+      destName = aDest.GetAsString();
+    } else {
+      const DestinationDict& dict = aDest.GetAsDestinationDict();
+      if (!dict.mDir.WasPassed() || !dict.mName.WasPassed()) {
+        error = NS_ERROR_DOM_FILESYSTEM_INVALID_PARAMETERS_ERR;
+        goto parameters_check_done;
+      }
+
+      pDestParent = &dict.mDir.Value();
+      destName = dict.mName.Value();
+    }
+
+    if (!pDestParent->DOMPathToRealPath(destName, destPath)) {
+      error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
+      goto parameters_check_done;
+    }
+
+    int32_t pos = destPath.RFindChar(FilesystemUtils::kSeparatorChar);
+    destName = Substring(destPath, pos + 1);
+    destDirectory = Substring(destPath, 0, pos);
+  }
+
+  // Cannot move a directory into its descendant or move an entry to itself.
+  if (!srcFile &&
+      StringBeginsWith(destPath +
+                       NS_LITERAL_STRING(FILESYSTEM_DOM_PATH_SEPARATOR),
+                       srcPath +
+                       NS_LITERAL_STRING(FILESYSTEM_DOM_PATH_SEPARATOR))) {
+    error = NS_ERROR_DOM_FILESYSTEM_INVALID_MODIFICATION_ERR;
+  }
+
+parameters_check_done:
+
+  nsRefPtr<FilesystemBase> fs = mFilesystem->Get();
+  return TaskBase::StartMoveTask(fs, srcPath, srcFile, destDirectory, destName,
+                                 error);
 }
 
 already_AddRefed<Promise>
@@ -228,6 +305,25 @@ Directory::IsValidRelativePath(const nsString& aPath)
         pathComponent.Equals(kParentDir)) {
       return false;
     }
+  }
+
+  return true;
+}
+
+bool
+Directory::GetSubDirectoryRealPath(const Directory& sub, nsAString& aRealPath)
+{
+  aRealPath = sub.mPath;
+
+  // The sub-directory path should begin with its parent directory path.
+  nsAutoString prefix;
+  prefix = mPath + NS_LITERAL_STRING(FILESYSTEM_DOM_PATH_SEPARATOR);
+
+  // Check the sub-directory path to see if it has the parent path as prefix.
+  if (!StringBeginsWith(aRealPath, prefix) ||
+      aRealPath.Length() < prefix.Length()) {
+    aRealPath.Truncate();
+    return false;
   }
 
   return true;

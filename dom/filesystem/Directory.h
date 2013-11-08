@@ -97,6 +97,13 @@ private:
   bool
   DOMPathToRealPath(const nsAString& aPath, nsAString& aRealPath) const;
 
+  /*
+   * Get the absolute real path of a sub-directory. If the given directory is
+   * not a sub-directory, return false and empty path.
+   */
+  bool
+  GetSubDirectoryRealPath(const Directory& sub, nsAString& aRealPath);
+
   nsAutoPtr<FilesystemWeakRef> mFilesystem;
   nsString mPath;
 };

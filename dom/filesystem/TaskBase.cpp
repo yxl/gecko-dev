@@ -9,6 +9,7 @@
 #include "FilesystemRequestParent.h"
 #include "FilesystemUtils.h"
 #include "GetFileOrDirectoryTask.h"
+#include "MoveTask.h"
 
 #include "nsNetUtil.h" // Stream transport service.
 #include "mozilla/dom/ContentChild.h"
@@ -63,6 +64,31 @@ TaskBase::StartGetFileOrDirectoryTask(FilesystemBase* aFilesystem,
 {
   nsRefPtr<GetFileOrDirectoryTask> task  = new GetFileOrDirectoryTask(
     aFilesystem, aParam, aParent);
+  task->Start();
+}
+
+// static
+already_AddRefed<AbortableProgressPromise>
+TaskBase::StartMoveTask(FilesystemBase* aFilesystem,
+                        const nsAString& aSrcPath,
+                        nsIDOMFile* aSrcFile,
+                        const nsAString& aDestDirectory,
+                        const nsAString& aDestName,
+                        nsresult aErrorValue)
+{
+  nsRefPtr<MoveTask> task = new MoveTask(aFilesystem, aSrcPath, aSrcFile,
+    aDestDirectory, aDestName, aErrorValue);
+  task->Start();
+  return task->GetPromise();
+}
+
+// static
+void
+TaskBase::StartMoveTask(FilesystemBase* aFilesystem,
+                        const FilesystemMoveParams& aParam,
+                        FilesystemRequestParent* aParent)
+{
+  nsRefPtr<MoveTask> task  = new MoveTask(aFilesystem, aParam, aParent);
   task->Start();
 }
 
@@ -183,6 +209,12 @@ TaskBase::Recv__delete__(const FilesystemResponseValue& aValue)
 {
   SetRequestResult(aValue);
   HandlerCallback();
+  return true;
+}
+
+bool
+TaskBase::RecvNotifyProgress(const nsString& value)
+{
   return true;
 }
 

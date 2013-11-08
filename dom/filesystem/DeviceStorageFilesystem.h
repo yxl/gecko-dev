@@ -31,6 +31,9 @@ public:
 
   virtual const nsAString&
   GetRootName() const MOZ_OVERRIDE;
+
+  virtual bool
+  GetRealPath(nsIDOMFile *aFile, nsAString& aRealPath) const MOZ_OVERRIDE;
 private:
   virtual
   ~DeviceStorageFilesystem();
