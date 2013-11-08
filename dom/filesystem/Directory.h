@@ -81,6 +81,11 @@ private:
    */
   bool DOMPathToRealPath(const nsAString& aPath, nsAString& aRealPath);
 
+  /*
+   * Check if the given path a descendant path.
+   */
+  bool IsDescendantRealPath(const nsAString& aPath);
+
   nsAutoPtr<FilesystemWeakRef> mFilesystem;
   nsRefPtr<FilesystemFile> mFile;
 };

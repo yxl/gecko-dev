@@ -176,9 +176,17 @@ struct FilesystemGetFileOrDirectoryParams
   bool directoryOnly;
 };
 
+struct FilesystemMoveParams
+{
+  nsString filesystem;
+  nsString srcRealPath;
+  nsString destRealPath;
+};
+
 union FilesystemParams
 {
   FilesystemCreateDirectoryParams;
+  FilesystemMoveParams;
   FilesystemGetFileOrDirectoryParams;
 };
 

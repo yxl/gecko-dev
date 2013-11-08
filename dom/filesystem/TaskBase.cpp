@@ -127,6 +127,12 @@ TaskBase::Recv__delete__(const FilesystemResponseValue& aValue)
   return true;
 }
 
+bool
+TaskBase::RecvNotifyProgress(const nsString& value)
+{
+  return true;
+}
+
 void
 TaskBase::SetError(const nsresult& aErrorValue)
 {

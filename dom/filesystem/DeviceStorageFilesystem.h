@@ -22,6 +22,7 @@ public:
   // Overrides FilesystemBase
   virtual nsPIDOMWindow* GetWindow() const MOZ_OVERRIDE;
   virtual already_AddRefed<nsIFile> GetLocalFile(const nsAString& aRealPath) const MOZ_OVERRIDE;
+  virtual void GetRealPath(nsIDOMFile *aFile, nsAString& aRealPath) const MOZ_OVERRIDE;
   virtual const nsAString& GetRootName() const MOZ_OVERRIDE;
 private:
   virtual ~DeviceStorageFilesystem();

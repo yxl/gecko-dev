@@ -8,6 +8,7 @@
 #define mozilla_dom_AbortableProgressPromise_h__
 
 #include "Promise.h"
+
 #include "nsAutoPtr.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/ErrorResult.h"

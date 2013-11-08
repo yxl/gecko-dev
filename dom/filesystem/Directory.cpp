@@ -11,12 +11,14 @@
 #include "FilesystemFile.h"
 #include "FilesystemUtils.h"
 #include "GetFileOrDirectoryTask.h"
+#include "MoveTask.h"
 
 #include "nsStringGlue.h"
 
 #include "mozilla/dom/AbortableProgressPromise.h"
 #include "mozilla/dom/DirectoryBinding.h"
 #include "mozilla/dom/Promise.h"
+#include "mozilla/dom/UnionTypes.h"
 
 namespace mozilla {
 namespace dom {
@@ -109,7 +111,60 @@ Directory::Get(const nsAString& aPath)
 already_AddRefed<AbortableProgressPromise>
 Directory::Move(const StringOrFileOrDirectory& path, const StringOrDirectoryOrDestinationDict& dest)
 {
-  return nullptr;
+  nsresult error = NS_OK;
+  nsAutoString srcPath;
+  nsAutoString destPath;
+
+  nsRefPtr<FilesystemBase> fs = mFilesystem->Get();
+
+  // Check and get the source path
+  if (path.IsString()) {
+    if (!DOMPathToRealPath(path.GetAsString(), srcPath)) {
+      error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
+      goto parameters_check_done;
+    }
+  } else if (path.IsFile()) {
+    nsCOMPtr<nsIDOMFile> file = path.GetAsFile();
+    fs->GetRealPath(file, srcPath);
+  } else {
+    Directory& dir = path.GetAsDirectory();
+    srcPath = dir.mFile->GetPath();
+  }
+  if (!IsDescendantRealPath(srcPath)) {
+    error = NS_ERROR_DOM_FILESYSTEM_NO_MODIFICATION_ALLOWED_ERR;
+    goto parameters_check_done;
+  }
+
+  // Check and get the destination path.
+  if (dest.IsString()) {
+    DOMPathToRealPath(dest.GetAsString(), destPath);
+  } else if (dest.IsDirectory()) {
+    Directory& dir = dest.GetAsDirectory();
+    // Use the source file name as the destination file name.
+    nsString fileName;
+    fileName = Substring(srcPath, srcPath.RFindChar(PRUnichar('/')) + 1);
+    dir.DOMPathToRealPath(fileName, destPath);
+  } else {
+    const DestinationDict& dict = dest.GetAsDestinationDict();
+    if (dict.mDir.WasPassed() && dict.mName.WasPassed()) {
+      Directory& dir = dict.mDir.Value();
+      dir.DOMPathToRealPath(dict.mName.Value(), destPath);
+    } else {
+      error = NS_ERROR_DOM_FILESYSTEM_INVALID_PARAMETERS_ERR;
+      goto parameters_check_done;
+    }
+  }
+  if (destPath.IsEmpty()) {
+    error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
+  } else if (StringBeginsWith(destPath + NS_LITERAL_STRING("/"), srcPath)) {
+    // Cannot move a directory into its descendant or move an entry to itself.
+    error = NS_ERROR_DOM_FILESYSTEM_INVALID_MODIFICATION_ERR;
+  }
+
+parameters_check_done:
+
+  nsRefPtr<MoveTask> task = new MoveTask(fs, srcPath, destPath, error);
+  return task->GetPromise();
 }
 
 already_AddRefed<Promise>
@@ -173,6 +228,16 @@ Directory::DOMPathToRealPath(const nsAString& aPath, nsAString& aRealPath)
   aRealPath = mFile->GetPath() + NS_LITERAL_STRING("/") + relativePath;
 
   return true;
+}
+
+bool
+Directory::IsDescendantRealPath(const nsAString& aRealPath)
+{
+  const nsString& root = mFile->GetPath();
+  if (StringBeginsWith(aRealPath, root) && aRealPath.Length() > root.Length()) {
+    return true;
+  }
+  return false;
 }
 
 } // namespace dom
