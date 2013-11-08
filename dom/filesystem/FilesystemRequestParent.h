@@ -28,6 +28,8 @@ public:
   bool IsRunning() { return state() == PFilesystemRequest::__Start; }
 
   void Dispatch();
+
+  virtual bool RecvAbort() MOZ_OVERRIDE;
 private:
   ThreadSafeAutoRefCnt mRefCnt;
   NS_DECL_OWNINGTHREAD

@@ -7,6 +7,7 @@
 #include "FilesystemBase.h"
 #include "CreateDirectoryTask.h"
 #include "GetFileOrDirectoryTask.h"
+#include "MoveTask.h"
 
 namespace mozilla {
 namespace dom {
@@ -46,12 +47,24 @@ FilesystemRequestParent::Dispatch()
       break;
     }
 
+    case FilesystemParams::TFilesystemMoveParams: {
+      FilesystemMoveParams& p = mParams;
+      mFilesystem = FilesystemBase::FromString(p.filesystem());
+      MOZ_ASSERT(mFilesystem, "Filesystem should not be null.");
+      task = new MoveTask(mFilesystem, p, this);
+      break;
+    }
     default: {
       NS_RUNTIMEABORT("not reached");
       break;
     }
 
   }
+}
+
+bool FilesystemRequestParent::RecvAbort()
+{
+  return true;
 }
 
 } // namespace dom

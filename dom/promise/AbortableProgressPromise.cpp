@@ -27,7 +27,6 @@ NS_INTERFACE_MAP_END_INHERITING(Promise)
 AbortableProgressPromise::AbortableProgressPromise(nsPIDOMWindow* aWindow)
   : Promise(aWindow)
 {
-  SetIsDOMBinding();
 }
 
 AbortableProgressPromise::~AbortableProgressPromise()

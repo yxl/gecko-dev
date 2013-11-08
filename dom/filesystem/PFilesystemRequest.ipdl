@@ -20,10 +20,16 @@ struct FilesystemErrorResponse
   nsresult error;
 };
 
+struct FilesystemBooleanResponse
+{
+  bool success;
+};
+
 union FilesystemResponseValue
 {
   FilesystemFileResponse;
   FilesystemErrorResponse;
+  FilesystemBooleanResponse;
 };
 
 sync protocol PFilesystemRequest
@@ -32,6 +38,16 @@ sync protocol PFilesystemRequest
 
 child:
   __delete__(FilesystemResponseValue response);
+
+  /*
+   * Notify the progress.
+   */
+  NotifyProgress(nsString value);
+parent:
+  /*
+   * Abort the IPC request.
+   */
+  Abort();
 };
 
 } // namespace dom
