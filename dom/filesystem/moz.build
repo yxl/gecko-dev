@@ -4,25 +4,21 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-TEST_DIRS += ['tests']
-
 EXPORTS.mozilla.dom += [
-    'AbortableProgressPromise.h',
-    'Promise.h',
-    'PromiseNativeHandler.h'
+    'Directory.h',
+    'EventStream.h',
 ]
 
 SOURCES += [
-    'AbortableProgressPromise.cpp',
-    'Promise.cpp',
-    'PromiseCallback.cpp',
-]
-
-FAIL_ON_WARNINGS = True
-
-LOCAL_INCLUDES += [
-    '../base',
-    '../workers',
+    'Directory.cpp',
+    'EventStream.cpp',
 ]
 
 FINAL_LIBRARY = 'gklayout'
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+LOCAL_INCLUDES += [
+    '/dom/base',
+]
+

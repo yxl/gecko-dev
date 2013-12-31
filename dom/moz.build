@@ -49,6 +49,7 @@ PARALLEL_DIRS += [
     'devicestorage',
     'encoding',
     'file',
+    'filesystem',
     'fmradio',
     'asmjscache',
     'media',

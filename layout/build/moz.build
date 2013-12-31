@@ -58,6 +58,7 @@ LOCAL_INCLUDES += [
     '/dom/base',
     '/dom/camera',
     '/dom/file',
+    '/dom/filesystem',
     '/dom/media',
     '/dom/speakermanager',
     '/dom/src/geolocation',
