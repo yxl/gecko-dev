@@ -2011,7 +2011,36 @@ nsLocalFile::Rename(nsIFile *newParentDir, const nsAString & newName)
 NS_IMETHODIMP
 nsLocalFile::RenameNative(nsIFile *newParent, const nsACString &newName)
 {
-  return NS_ERROR_NOT_IMPLEMENTED;
+  nsresult rv;
+
+  // check to make sure that this has been initialized properly
+  CHECK_mPath();
+
+  // check to make sure that we have a new parent
+  nsAutoCString newPathName;
+  rv = GetNativeTargetPathName(newParent, newName, newPathName);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  // try for atomic rename
+  if (rename(mPath.get(), newPathName.get()) < 0) {
+#ifdef VMS
+    if (errno == EXDEV || errno == ENXIO) {
+#else
+    if (errno == EXDEV) {
+#endif
+      rv = NS_ERROR_FILE_ACCESS_DENIED;
+    } else {
+      rv = NSRESULT_FOR_ERRNO();
+    }
+  }
+
+  if (NS_SUCCEEDED(rv)) {
+    // Adjust this
+    mPath = newPathName;
+  }
+  return rv;
 }
 
 nsresult
