@@ -1785,7 +1785,7 @@ nsresult
 nsLocalFile::CopySingleFile(nsIFile *sourceFile, nsIFile *destParent,
                             const nsAString &newName, 
                             bool followSymlinks, bool move,
-                            bool skipNtfsAclReset)
+                            bool skipNtfsAclReset, bool renameOnly /*= false*/)
 {
     nsresult rv;
     nsAutoString filePath;
@@ -1857,6 +1857,9 @@ nsLocalFile::CopySingleFile(nsIFile *sourceFile, nsIFile *destParent,
         // as this could be an SMBV2 mapped drive.
         if (!copyOK && GetLastError() == ERROR_NOT_SAME_DEVICE)
         {
+            if (renameOnly) {
+                return NS_ERROR_FILE_ACCESS_DENIED;
+            }
             copyOK = CopyFileExW(filePath.get(), destPath.get(), nullptr,
                                  nullptr, nullptr, dwCopyFlags);
 
@@ -2155,7 +2158,76 @@ nsLocalFile::MoveTo(nsIFile *newParentDir, const nsAString &newName)
 NS_IMETHODIMP
 nsLocalFile::Rename(nsIFile *newParentDir, const nsAString & newName)
 {
-  return NS_ERROR_NOT_IMPLEMENTED;
+  nsCOMPtr<nsIFile> targetParentDir = newParentDir;
+  // check to see if this exists, otherwise return an error.
+  // we will check this by resolving.  If the user wants us
+  // to follow links, then we are talking about the target,
+  // hence we can use the |followSymlinks| parameter.
+  nsresult rv = ResolveAndStat();
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  if (!targetParentDir) {
+    // no parent was specified.  We must rename.
+    if (newName.IsEmpty()) {
+      return NS_ERROR_INVALID_ARG;
+    }
+    rv = GetParent(getter_AddRefs(targetParentDir));
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+  }
+
+  if (!targetParentDir) {
+    return NS_ERROR_FILE_DESTINATION_NOT_DIR;
+  }
+
+  // make sure it exists and is a directory.  Create it if not there.
+  bool exists;
+  targetParentDir->Exists(&exists);
+  if (!exists) {
+    rv = targetParentDir->Create(DIRECTORY_TYPE, 0644);
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+  } else {
+    bool isDir;
+    targetParentDir->IsDirectory(&isDir);
+    if (!isDir) {
+      return NS_ERROR_FILE_DESTINATION_NOT_DIR;
+    }
+  }
+
+  // Move single file, or move a directory
+  rv = CopySingleFile(this, targetParentDir, newName, false, true,
+                      !newParentDir, true);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  // If we moved, we want to adjust this.
+  MakeDirty();
+
+  nsAutoString newParentPath;
+  targetParentDir->GetPath(newParentPath);
+
+  if (newParentPath.IsEmpty()) {
+    return NS_ERROR_FAILURE;
+  }
+
+  InitWithPath(newParentPath);
+
+  nsAutoString aFileName;
+  aFileName = newName;
+
+  if (aFileName.IsEmpty()) {
+    GetLeafName(aFileName);
+  }
+
+  Append(aFileName);
+
+  return NS_OK;
 }
 
 NS_IMETHODIMP

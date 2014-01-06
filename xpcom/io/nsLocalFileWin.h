@@ -92,7 +92,8 @@ private:
     nsresult CopySingleFile(nsIFile *source, nsIFile* dest,
                             const nsAString &newName,
                             bool followSymlinks, bool move,
-                            bool skipNtfsAclReset = false);
+                            bool skipNtfsAclReset = false,
+                            bool renameOnly = false);
 
     nsresult SetModDate(int64_t aLastModifiedTime, const char16_t *filePath);
     nsresult HasFileAttribute(DWORD fileAttrib, bool *_retval);
