@@ -181,6 +181,16 @@ interface nsIFile : nsISupports
     [noscript] void moveToNative(in nsIFile newParentDir, in ACString newName);
 
     /**
+     *  rename[Native]
+     *
+     *  This method is identical to moveTo except that if this file or directory
+     *  is moved to a a different volume, it fails and returns an error
+     *  (NS_ERROR_FILE_ACCESS_DENIED).
+     */
+    void rename(in nsIFile newParentDir, in AString newName);
+    [noscript] void renameNative(in nsIFile newParentDir, in ACString newName);
+
+    /**
      *  This will try to delete this file.  The 'recursive' flag
      *  must be PR_TRUE to delete directories which are not empty.
      *

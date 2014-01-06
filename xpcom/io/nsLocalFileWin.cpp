@@ -2152,6 +2152,30 @@ nsLocalFile::MoveTo(nsIFile *newParentDir, const nsAString &newName)
     return CopyMove(newParentDir, newName, false, true);
 }
 
+NS_IMETHODIMP
+nsLocalFile::Rename(nsIFile *newParentDir, const nsAString & newName)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsLocalFile::RenameNative(nsIFile *newParent, const nsACString &newName)
+{
+  // Check we are correctly initialized.
+  CHECK_mWorkingPath();
+
+  if (newName.IsEmpty()) {
+    return Rename(newParent, EmptyString());
+  }
+
+  nsAutoString tmp;
+  nsresult rv = NS_CopyNativeToUnicode(newName, tmp);
+  if (NS_SUCCEEDED(rv)) {
+    return Rename(newParent, tmp);
+  }
+
+  return rv;
+}
 
 NS_IMETHODIMP
 nsLocalFile::Load(PRLibrary * *_retval)

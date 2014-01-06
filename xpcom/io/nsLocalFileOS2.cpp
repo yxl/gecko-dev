@@ -2511,6 +2511,28 @@ nsLocalFile::MoveTo(nsIFile *newParentDir, const nsAString &newName)
 }
 
 NS_IMETHODIMP
+nsLocalFile::Rename(nsIFile *newParentDir, const nsAString & newName)
+{
+  if (newName.IsEmpty()) {
+    return RenameNative(newParentDir, EmptyCString());
+  }
+
+  nsAutoCString tmp;
+  nsresult rv = NS_CopyUnicodeToNative(newName, tmp);
+  if (NS_SUCCEEDED(rv)) {
+    return RenameNative(newParentDir, tmp);
+  }
+
+  return rv;
+}
+
+NS_IMETHODIMP
+nsLocalFile::RenameNative(nsIFile *newParent, const nsACString &newName)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 nsLocalFile::GetTarget(nsAString &_retval)
 {
     nsAutoCString tmp;
