@@ -7,6 +7,7 @@
 #include "mozilla/dom/Directory.h"
 
 #include "CreateDirectoryTask.h"
+#include "FilesystemPermissionRequest.h"
 #include "GetFileOrDirectoryTask.h"
 
 #include "nsCharSeparatedTokenizer.h"
@@ -39,7 +40,7 @@ Directory::GetRoot(FilesystemBase* aFilesystem)
 {
   nsRefPtr<GetFileOrDirectoryTask> task = new GetFileOrDirectoryTask(
     aFilesystem, EmptyString(), true);
-  task->Start();
+  FilesystemPermissionRequest::RequestForTask(task);
   return task->GetPromise();
 }
 
@@ -102,7 +103,7 @@ Directory::CreateDirectory(const nsAString& aPath)
   nsRefPtr<CreateDirectoryTask> task = new CreateDirectoryTask(
     fs, realPath);
   task->SetError(error);
-  task->Start();
+  FilesystemPermissionRequest::RequestForTask(task);
   return task->GetPromise();
 }
 
@@ -118,7 +119,7 @@ Directory::Get(const nsAString& aPath)
   nsRefPtr<GetFileOrDirectoryTask> task = new GetFileOrDirectoryTask(
       fs, realPath, false);
   task->SetError(error);
-  task->Start();
+  FilesystemPermissionRequest::RequestForTask(task);
   return task->GetPromise();
 }
 

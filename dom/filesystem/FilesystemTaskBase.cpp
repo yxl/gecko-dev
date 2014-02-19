@@ -44,6 +44,13 @@ FilesystemTaskBase::~FilesystemTaskBase()
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
 }
 
+already_AddRefed<FilesystemBase>
+FilesystemTaskBase::GetFilesystem()
+{
+  nsRefPtr<FilesystemBase> filesystem = do_QueryReferent(mFilesystem);
+  return filesystem.forget();
+}
+
 void
 FilesystemTaskBase::Start()
 {
@@ -152,7 +159,8 @@ FilesystemTaskBase::SetError(const nsresult& aErrorValue)
 {
   uint16_t module = NS_ERROR_GET_MODULE(aErrorValue);
   if (module == NS_ERROR_MODULE_DOM_FILESYSTEM ||
-      module == NS_ERROR_MODULE_DOM_FILE) {
+      module == NS_ERROR_MODULE_DOM_FILE ||
+      module == NS_ERROR_MODULE_DOM) {
     mErrorValue = aErrorValue;
     return;
   }

@@ -39,6 +39,8 @@ public:
   already_AddRefed<Promise>
   GetPromise();
 
+  virtual void
+  GetPermissionAccessType(nsCString& aAccess) const MOZ_OVERRIDE;
 protected:
   virtual FilesystemParams
   GetRequestParams(const nsString& aFilesystem) const MOZ_OVERRIDE;
