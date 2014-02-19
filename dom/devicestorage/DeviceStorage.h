@@ -32,6 +32,7 @@ class DeviceStorageEnumerationParameters;
 class DOMCursor;
 class DOMRequest;
 class Promise;
+class DeviceStorageFilesystem;
 } // namespace dom
 namespace ipc {
 class FileDescriptor;
@@ -157,6 +158,7 @@ class nsDOMDeviceStorage MOZ_FINAL
   typedef mozilla::dom::DOMCursor DOMCursor;
   typedef mozilla::dom::DOMRequest DOMRequest;
   typedef mozilla::dom::Promise Promise;
+  typedef mozilla::dom::DeviceStorageFilesystem DeviceStorageFilesystem;
 public:
   typedef nsTArray<nsString> VolumeNameArray;
 
@@ -332,6 +334,8 @@ private:
       DEVICE_STORAGE_TYPE_SHARED,
       DEVICE_STORAGE_TYPE_EXTERNAL
   };
+
+  nsRefPtr<DeviceStorageFilesystem> mFilesystem;
 };
 
 #endif
