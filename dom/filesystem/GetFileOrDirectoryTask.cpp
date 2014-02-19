@@ -174,6 +174,11 @@ GetFileOrDirectoryTask::Work()
       return;
     }
 
+    if (!filesystem->IsSafeFile(file)) {
+      SetError(NS_ERROR_DOM_SECURITY_ERR);
+      return;
+    }
+
     mTargetFile = new nsDOMFileFile(file);
   }
 }
@@ -218,6 +223,12 @@ GetFileOrDirectoryTask::HandlerCallback()
     }
     mPromise->MaybeReject(cx, val);
   }
+}
+
+void
+GetFileOrDirectoryTask::GetPermissionAccessType(nsCString& aAccess) const
+{
+  aAccess.AssignLiteral("read");
 }
 
 } // namespace dom
