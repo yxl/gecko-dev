@@ -8,6 +8,7 @@
 #include "CreateDirectoryTask.h"
 #include "GetFileOrDirectoryTask.h"
 
+#include "mozilla/AppProcessChecker.h"
 #include "mozilla/dom/FilesystemBase.h"
 
 namespace mozilla {
@@ -52,6 +53,22 @@ FilesystemRequestParent::Dispatch(ContentParent* aParent,
   if (NS_WARN_IF(!task || !mFilesystem)) {
     // Should never reach here.
     return false;
+  }
+
+  if (!mFilesystem->IsTesting()) {
+    // Check the content process permission.
+
+    nsCString access;
+    task->GetPermissionAccessType(access);
+
+    nsAutoCString permissionName;
+    permissionName = mFilesystem->GetPermission();
+    permissionName.AppendLiteral("-");
+    permissionName.Append(access);
+
+    if (!AssertAppProcessPermission(aParent, permissionName.get())) {
+      return false;
+    }
   }
 
   task->Start();

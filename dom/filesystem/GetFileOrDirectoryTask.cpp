@@ -220,5 +220,11 @@ GetFileOrDirectoryTask::HandlerCallback()
   }
 }
 
+void
+GetFileOrDirectoryTask::GetPermissionAccessType(nsCString& aAccess) const
+{
+  aAccess.AssignLiteral("read");
+}
+
 } // namespace dom
 } // namespace mozilla

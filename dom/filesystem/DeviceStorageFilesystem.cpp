@@ -7,9 +7,11 @@
 #include "mozilla/dom/DeviceStorageFilesystem.h"
 
 #include "DeviceStorage.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/dom/FilesystemUtils.h"
 #include "nsCOMPtr.h"
 #include "nsDebug.h"
+#include "nsDeviceStorage.h"
 #include "nsIFile.h"
 #include "nsPIDOMWindow.h"
 
@@ -29,6 +31,14 @@ DeviceStorageFilesystem::DeviceStorageFilesystem(
   mString.Append(mStorageType);
   mString.AppendLiteral("-");
   mString.Append(mStorageName);
+
+  mIsTesting =
+    mozilla::Preferences::GetBool("device.storage.prompt.testing", false);
+
+  // Get the permission name required to access the file system.
+  nsresult rv =
+    DeviceStorageTypeChecker::GetPermissionForType(mStorageType, mPermission);
+  NS_WARN_IF(NS_FAILED(rv));
 
   // Get the local path of the file system root.
   // Since the child process is not allowed to access the file system, we only

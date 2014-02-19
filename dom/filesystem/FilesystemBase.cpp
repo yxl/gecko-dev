@@ -43,6 +43,7 @@ FilesystemBase::FromString(const nsAString& aString)
 }
 
 FilesystemBase::FilesystemBase()
+  : mIsTesting(false)
 {
 }
 
