@@ -31,6 +31,7 @@ namespace dom {
 class DeviceStorageEnumerationParameters;
 class DOMCursor;
 class DOMRequest;
+class Promise;
 } // namespace dom
 namespace ipc {
 class FileDescriptor;
@@ -155,6 +156,7 @@ class nsDOMDeviceStorage MOZ_FINAL
     EnumerationParameters;
   typedef mozilla::dom::DOMCursor DOMCursor;
   typedef mozilla::dom::DOMRequest DOMRequest;
+  typedef mozilla::dom::Promise Promise;
 public:
   typedef nsTArray<nsString> VolumeNameArray;
 
@@ -250,6 +252,9 @@ public:
   bool Default();
 
   // Uses XPCOM GetStorageName
+
+  already_AddRefed<Promise>
+  GetRoot();
 
   static void
   CreateDeviceStorageFor(nsPIDOMWindow* aWin,
