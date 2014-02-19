@@ -117,6 +117,8 @@
 #include "mozilla/dom/indexedDB/PIndexedDBChild.h"
 #include "mozilla/dom/mobilemessage/SmsChild.h"
 #include "mozilla/dom/devicestorage/DeviceStorageRequestChild.h"
+#include "mozilla/dom/PFilesystemRequestChild.h"
+#include "mozilla/dom/FilesystemTaskBase.h"
 #include "mozilla/dom/bluetooth/PBluetoothChild.h"
 #include "mozilla/dom/PFMRadioChild.h"
 #include "mozilla/ipc/InputStreamUtils.h"
@@ -1012,6 +1014,24 @@ bool
 ContentChild::DeallocPDeviceStorageRequestChild(PDeviceStorageRequestChild* aDeviceStorage)
 {
     delete aDeviceStorage;
+    return true;
+}
+
+PFilesystemRequestChild*
+ContentChild::AllocPFilesystemRequestChild(const FilesystemParams& aParams)
+{
+    NS_NOTREACHED("Should never get here!");
+    return nullptr;
+}
+
+bool
+ContentChild::DeallocPFilesystemRequestChild(PFilesystemRequestChild* aFilesystem)
+{
+    mozilla::dom::FilesystemTaskBase* child =
+      static_cast<mozilla::dom::FilesystemTaskBase*>(aFilesystem);
+    // The reference is increased in FilesystemTaskBase::Start of
+    // FilesystemTaskBase.cpp. We should decrease it after IPC.
+    NS_RELEASE(child);
     return true;
 }
 
