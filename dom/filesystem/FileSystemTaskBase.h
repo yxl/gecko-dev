@@ -10,7 +10,10 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/FileSystemRequestParent.h"
 #include "mozilla/dom/PFileSystemRequestChild.h"
+#include "mozilla/dom/ipc/Blob.h"
 #include "nsWeakReference.h"
+
+class nsIDOMFile;
 
 namespace mozilla {
 namespace dom {
@@ -158,7 +161,7 @@ protected:
    * thread of the parent process.
    * Overrides this function to define the task operation for individual task.
    */
-  virtual void
+  virtual nsresult
   Work() = 0;
 
   /*
@@ -202,6 +205,9 @@ protected:
   // Overrides PFileSystemRequestChild
   virtual bool
   Recv__delete__(const FileSystemResponseValue& value) MOZ_OVERRIDE;
+
+  BlobParent*
+  GetBlobParent(nsIDOMFile* aFile) const;
 
   nsresult mErrorValue;
 

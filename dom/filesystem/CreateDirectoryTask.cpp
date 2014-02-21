@@ -81,7 +81,7 @@ CreateDirectoryTask::SetSuccessRequestResult(const FileSystemResponseValue& aVal
   mTargetRealPath = r.realPath();
 }
 
-void
+nsresult
 CreateDirectoryTask::Work()
 {
   MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
@@ -90,32 +90,26 @@ CreateDirectoryTask::Work()
 
   nsRefPtr<FileSystemBase> filesystem = do_QueryReferent(mFileSystem);
   if (!filesystem) {
-    return;
+    return NS_ERROR_FAILURE;
   }
 
   nsCOMPtr<nsIFile> file = filesystem->GetLocalFile(mTargetRealPath);
   if (!file) {
-    SetError(NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR);
-    return;
+    return NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
   }
 
   bool ret;
   nsresult rv = file->Exists(&ret);
-  if (NS_FAILED(rv)) {
-    SetError(rv);
-    return;
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
   }
 
   if (ret) {
-    SetError(NS_ERROR_DOM_FILESYSTEM_PATH_EXISTS_ERR);
-    return;
+    return NS_ERROR_DOM_FILESYSTEM_PATH_EXISTS_ERR;
   }
 
   rv = file->Create(nsIFile::DIRECTORY_TYPE, 0777);
-  if (NS_FAILED(rv)) {
-    SetError(rv);
-    return;
-  }
+  return rv;
 }
 
 void

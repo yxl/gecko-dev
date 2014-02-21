@@ -60,7 +60,13 @@ FileSystemBase::GetWindow() const
 bool
 FileSystemBase::IsSafeFile(nsIFile* aFile) const
 {
-  return true;
+  return false;
+}
+
+bool
+FileSystemBase::IsSafeDirectory(Directory* aDir) const
+{
+  return false;
 }
 
 } // namespace dom

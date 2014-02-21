@@ -14,6 +14,7 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PContent.h"
 #include "mozilla/unused.h"
+#include "nsDOMFile.h"
 
 namespace mozilla {
 namespace dom {
@@ -90,7 +91,10 @@ FileSystemTaskBase::Run()
 {
   if (!NS_IsMainThread()) {
     // Run worker thread tasks
-    Work();
+    nsresult rv = Work();
+    if (NS_FAILED(rv)) {
+      SetError(rv);
+    }
     // Dispatch itself to main thread
     NS_DispatchToMainThread(this);
     return NS_OK;
@@ -152,6 +156,26 @@ FileSystemTaskBase::Recv__delete__(const FileSystemResponseValue& aValue)
   SetRequestResult(aValue);
   HandlerCallback();
   return true;
+}
+
+BlobParent*
+FileSystemTaskBase::GetBlobParent(nsIDOMFile* aFile) const
+{
+  MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
+             "Only call from parent process!");
+  MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
+  MOZ_ASSERT(aFile);
+
+  // Load the lazy dom file data from the parent before sending to the child.
+  nsString mimeType;
+  aFile->GetType(mimeType);
+  uint64_t fileSize;
+  aFile->GetSize(&fileSize);
+  uint64_t lastModifiedDate;
+  aFile->GetMozLastModifiedDate(&lastModifiedDate);
+
+  ContentParent* cp = static_cast<ContentParent*>(mRequestParent->Manager());
+  return cp->GetOrCreateActorForBlob(aFile);
 }
 
 void
