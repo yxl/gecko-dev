@@ -4,35 +4,36 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_CreateDirectoryTask_h
-#define mozilla_dom_CreateDirectoryTask_h
+#ifndef mozilla_dom_RemoveTask_h
+#define mozilla_dom_RemoveTask_h
 
 #include "mozilla/dom/FileSystemTaskBase.h"
 #include "nsAutoPtr.h"
 
 class nsCString;
+class nsIDOMFile;
 class nsString;
 
 namespace mozilla {
 namespace dom {
 
-class Directory;
-class FileSystemBase;
-class FileSystemCreateDirectoryParams;
 class Promise;
 
-class CreateDirectoryTask MOZ_FINAL
+class RemoveTask MOZ_FINAL
   : public FileSystemTaskBase
 {
 public:
-  CreateDirectoryTask(FileSystemBase* aFileSystem,
-                      const nsAString& aPath);
-  CreateDirectoryTask(FileSystemBase* aFileSystem,
-                      const FileSystemCreateDirectoryParams& aParam,
-                      FileSystemRequestParent* aParent);
+  RemoveTask(FileSystemBase* aFileSystem,
+             const nsAString& aDirPath,
+             nsIDOMFile* aTargetFile,
+             const nsAString& aTargetPath,
+             bool aRecursive);
+  RemoveTask(FileSystemBase* aFileSystem,
+             const FileSystemRemoveParams& aParam,
+             FileSystemRequestParent* aParent);
 
   virtual
-  ~CreateDirectoryTask();
+  ~RemoveTask();
 
   already_AddRefed<Promise>
   GetPromise();
@@ -58,10 +59,14 @@ protected:
 
 private:
   nsRefPtr<Promise> mPromise;
+  nsString mDirRealPath;
+  nsCOMPtr<nsIDOMFile> mTargetFile;
   nsString mTargetRealPath;
+  bool mRecursive;
+  bool mReturnValue;
 };
 
 } // namespace dom
 } // namespace mozilla
 
-#endif // mozilla_dom_CreateDirectoryTask_h
+#endif // mozilla_dom_RemoveTask_h

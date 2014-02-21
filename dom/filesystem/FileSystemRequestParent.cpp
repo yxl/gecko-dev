@@ -7,6 +7,7 @@
 
 #include "CreateDirectoryTask.h"
 #include "GetFileOrDirectoryTask.h"
+#include "RemoveTask.h"
 
 #include "mozilla/AppProcessChecker.h"
 #include "mozilla/dom/FileSystemBase.h"
@@ -22,6 +23,14 @@ FileSystemRequestParent::~FileSystemRequestParent()
 {
 }
 
+#define FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(name)                         \
+    case FileSystemParams::TFileSystem##name##Params: {                        \
+      const FileSystem##name##Params& p = aParams;                             \
+      mFileSystem = FileSystemBase::FromString(p.filesystem());                \
+      task = new name##Task(mFileSystem, p, this);                             \
+      break;                                                                   \
+    }
+
 bool
 FileSystemRequestParent::Dispatch(ContentParent* aParent,
                                   const FileSystemParams& aParams)
@@ -30,19 +39,9 @@ FileSystemRequestParent::Dispatch(ContentParent* aParent,
   nsRefPtr<FileSystemTaskBase> task;
   switch (aParams.type()) {
 
-    case FileSystemParams::TFileSystemCreateDirectoryParams: {
-      const FileSystemCreateDirectoryParams& p = aParams;
-      mFileSystem = FileSystemBase::FromString(p.filesystem());
-      task = new CreateDirectoryTask(mFileSystem, p, this);
-      break;
-    }
-
-    case FileSystemParams::TFileSystemGetFileOrDirectoryParams: {
-      const FileSystemGetFileOrDirectoryParams& p = aParams;
-      mFileSystem = FileSystemBase::FromString(p.filesystem());
-      task  = new GetFileOrDirectoryTask(mFileSystem, p, this);
-      break;
-    }
+    FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(CreateDirectory)
+    FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(GetFileOrDirectory)
+    FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(Remove)
 
     default: {
       NS_RUNTIMEABORT("not reached");
@@ -73,6 +72,12 @@ FileSystemRequestParent::Dispatch(ContentParent* aParent,
 
   task->Start();
   return true;
+}
+
+void
+FileSystemRequestParent::ActorDestroy(ActorDestroyReason why)
+{
+  mFileSystem = nullptr;
 }
 
 } // namespace dom

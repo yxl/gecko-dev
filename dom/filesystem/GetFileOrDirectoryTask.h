@@ -51,7 +51,7 @@ protected:
   virtual void
   SetSuccessRequestResult(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
 
-  virtual void
+  virtual nsresult
   Work() MOZ_OVERRIDE;
 
   virtual void
