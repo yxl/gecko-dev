@@ -119,7 +119,7 @@ GetFileOrDirectoryTask::Work()
 {
   MOZ_ASSERT(FilesystemUtils::IsParentProcess(),
              "Only call from parent process!");
-  MOZ_ASSERT(!NS_IsMainThread(), "Only call on child thread!");
+  MOZ_ASSERT(!NS_IsMainThread(), "Only call on worker thread!");
 
   nsRefPtr<FilesystemBase> filesystem = do_QueryReferent(mFilesystem);
   if (!filesystem) {

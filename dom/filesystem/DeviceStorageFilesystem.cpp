@@ -13,6 +13,7 @@
 #include "nsCOMPtr.h"
 #include "nsDebug.h"
 #include "nsDeviceStorage.h"
+#include "nsIDOMFile.h"
 #include "nsIFile.h"
 #include "nsPIDOMWindow.h"
 
@@ -43,6 +44,13 @@ DeviceStorageFilesystem::DeviceStorageFilesystem(
     DeviceStorageTypeChecker::GetPermissionForType(mStorageType, mPermission);
   NS_WARN_IF(NS_FAILED(rv));
 
+  // DeviceStorageTypeChecker is a singleton object and must be initialized on
+  // the main thread. We initialize it here so that we can use it on the worker
+  // thread.
+  DebugOnly<DeviceStorageTypeChecker*> typeChecker
+    = DeviceStorageTypeChecker::CreateOrGet();
+  MOZ_ASSERT(typeChecker);
+
   // Get the local path of the file system root.
   // Since the child process is not allowed to access the file system, we only
   // do this from the parent process.
@@ -57,13 +65,6 @@ DeviceStorageFilesystem::DeviceStorageFilesystem(
   NS_WARN_IF(!rootFile || NS_FAILED(rootFile->GetPath(mLocalRootPath)));
   FilesystemUtils::LocalPathToNormalizedPath(mLocalRootPath,
     mNormalizedLocalRootPath);
-
-  // DeviceStorageTypeChecker is a singleton object and must be initialized on
-  // the main thread. We initialize it here so that we can use it on the worker
-  // thread.
-  DebugOnly<DeviceStorageTypeChecker*> typeChecker
-    = DeviceStorageTypeChecker::CreateOrGet();
-  MOZ_ASSERT(typeChecker);
 }
 
 DeviceStorageFilesystem::~DeviceStorageFilesystem()
@@ -103,6 +104,23 @@ DeviceStorageFilesystem::GetLocalFile(const nsAString& aRealPath) const
   return file.forget();
 }
 
+bool
+DeviceStorageFilesystem::GetRealPath(nsIDOMFile* aFile, nsAString& aRealPath) const
+{
+  MOZ_ASSERT(FilesystemUtils::IsParentProcess(),
+             "Should be on parent process!");
+  MOZ_ASSERT(aFile, "aFile Should not be null.");
+
+  aRealPath.Truncate();
+
+  nsAutoString filePath;
+  if (NS_FAILED(aFile->GetMozFullPathInternal(filePath))) {
+    return false;
+  }
+
+  return LocalPathToRealPath(filePath, aRealPath);
+}
+
 const nsAString&
 DeviceStorageFilesystem::GetRootName() const
 {
@@ -121,8 +139,7 @@ DeviceStorageFilesystem::IsSafeFile(nsIFile* aFile) const
   if (NS_FAILED(aFile->GetPath(path))) {
     return false;
   }
-  FilesystemUtils::LocalPathToNormalizedPath(path, path);
-  if (!FilesystemUtils::IsDescendantPath(mNormalizedLocalRootPath, path)) {
+  if (!LocalPathToRealPath(path, path)) {
     return false;
   }
 
@@ -131,6 +148,33 @@ DeviceStorageFilesystem::IsSafeFile(nsIFile* aFile) const
     = DeviceStorageTypeChecker::CreateOrGet();
   MOZ_ASSERT(typeChecker);
   return typeChecker->Check(mStorageType, aFile);
+}
+
+bool
+DeviceStorageFilesystem::IsSafeDirectory(Directory* aDir) const
+{
+  MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
+  MOZ_ASSERT(aDir);
+  nsRefPtr<FilesystemBase> fs = aDir->GetFilesystem();
+  if (!fs) {
+    return false;
+  }
+  // Check if the given directory is from this storage.
+  return fs->ToString() == mString;
+}
+
+bool
+DeviceStorageFilesystem::LocalPathToRealPath(const nsAString& aLocalPath,
+                                             nsAString& aRealPath) const
+{
+  nsAutoString path;
+  FilesystemUtils::LocalPathToNormalizedPath(aLocalPath, path);
+  if (!FilesystemUtils::IsDescendantPath(mNormalizedLocalRootPath, path)) {
+    aRealPath.Truncate();
+    return false;
+  }
+  aRealPath = Substring(path, mNormalizedLocalRootPath.Length());
+  return true;
 }
 
 } // namespace dom
