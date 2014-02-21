@@ -7,6 +7,7 @@
 
 #include "CreateDirectoryTask.h"
 #include "GetFileOrDirectoryTask.h"
+#include "RemoveTask.h"
 
 #include "mozilla/AppProcessChecker.h"
 #include "mozilla/dom/FilesystemBase.h"
@@ -41,6 +42,13 @@ FilesystemRequestParent::Dispatch(ContentParent* aParent,
       const FilesystemGetFileOrDirectoryParams& p = aParams;
       mFilesystem = FilesystemBase::FromString(p.filesystem());
       task  = new GetFileOrDirectoryTask(mFilesystem, p, this);
+      break;
+    }
+
+    case FilesystemParams::TFilesystemRemoveParams: {
+      const FilesystemRemoveParams& p = aParams;
+      mFilesystem = FilesystemBase::FromString(p.filesystem());
+      task  = new RemoveTask(mFilesystem, p, this);
       break;
     }
 

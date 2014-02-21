@@ -33,15 +33,26 @@ public:
   virtual already_AddRefed<nsIFile>
   GetLocalFile(const nsAString& aRealPath) const MOZ_OVERRIDE;
 
+  virtual bool
+  GetRealPath(nsIDOMFile *aFile, nsAString& aRealPath) const MOZ_OVERRIDE;
+
   virtual const nsAString&
   GetRootName() const MOZ_OVERRIDE;
 
   virtual bool
   IsSafeFile(nsIFile* aFile) const MOZ_OVERRIDE;
 
+  virtual bool
+  IsSafeFile(nsIDOMFile* aFile) const MOZ_OVERRIDE;
+
+  virtual bool
+  IsSafeDirectory(Directory* aDir) const MOZ_OVERRIDE;
 private:
   virtual
   ~DeviceStorageFilesystem();
+
+  bool
+  LocalPathToRealPath(const nsAString& aLocalPath, nsAString& aRealPath) const;
 
   nsString mStorageType;
   nsString mStorageName;

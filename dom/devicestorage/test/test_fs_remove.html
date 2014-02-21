@@ -1,0 +1,223 @@
+<!--
+  Any copyright is dedicated to the Public Domain.
+  http://creativecommons.org/publicdomain/zero/1.0/
+-->
+<!DOCTYPE HTML>
+<html> <!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=934368
+-->
+<head>
+  <title>Test Directory#remove and #removeDeep of the Filesystem API for device storage</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="devicestorage_common.js"></script>
+
+<link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=934368">Mozilla Bug 934368</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+</div>
+<pre id="test">
+<script class="testbody" type="application/javascript;version=1.7">
+
+devicestorage_setup();
+
+let gStorage = null;
+let gTestCount = 0;
+let gGetCount = 0;
+let gPath = "";
+let gRoot = null;
+let gSub1 = null;
+let gSub2 = null;
+let gFileA = null;
+let gFileB = null;
+let gTestCases = [];
+let gDeep = true;
+
+function createTests() {
+  gTestCases = [
+    // Remove a non-existent file should return false.
+    {
+      dir: gRoot,
+      path: "non-existent.png",
+      ret: false,
+      shouldPass: true
+    },
+
+    // Remove parent directory should fail.
+    {
+      dir: gSub2,
+      path: gSub1,
+      ret: true,
+      shouldPass: false
+    },
+
+    // Remove root directory should fail.
+    {
+      dir: gRoot,
+      path: gRoot,
+      ret: true,
+      shouldPass: false
+    },
+
+    // Remove non-descendant file should fail.
+    {
+      dir: gSub1,
+      path: gFileB,
+      ret: true,
+      shouldPass: false
+    },
+
+    // Remove descendant file should return true.
+    {
+      dir: gSub1,
+      path: gFileA,
+      ret: true,
+      shouldPass: true
+    },
+
+    // Remove empty directory should return true
+    {
+      dir: gSub1,
+      path: "sub2",
+      ret: true,
+      shouldPass: true
+    },
+
+
+    // Remove non-empty directory should return true for "removeDeep" and fail for
+    // "remove".
+    {
+      dir: gRoot,
+      path: "sub",
+      ret: true,
+      get shouldPass() { return gDeep; }
+    }
+  ];
+}
+
+function createTestFiles(storage, callback) {
+  function createTestFile(path) {
+    return new Promise(function(resolve, reject) {
+      let req = storage.addNamed(createRandomBlob("image/png"), path);
+
+      req.onsuccess = function() {
+        resolve();
+      };
+
+      req.onerror = function() {
+        ok(false, "Failed to create " + path + '. Error: ' + req.error.name);
+        reject();
+      };
+    });
+  }
+
+  let arr = [];
+
+  ["sub1/sub2/a.png", "sub/b.png"].forEach(function(path) {
+    arr.push(createTestFile(path));
+  });
+
+  Promise.all(arr).then(function() {
+    callback();
+  }, function() {
+    ok(false, "Failed to created test files.");
+    devicestorage_cleanup();
+  });
+}
+
+function runTest() {
+  gTestCount = 0;
+  createTestFiles(gStorage, function() {
+    gGetCount = 0;
+    gPath = "/";
+    gStorage.getRoot().then(getSuccess, cbError);
+  });
+}
+
+function testNextRemove() {
+  if (gTestCount < gTestCases.length) {
+    let data = gTestCases[gTestCount++];
+    let promise = gDeep ? data.dir.removeDeep(data.path) :
+                          data.dir.remove(data.path);
+    promise.then(function(result) {
+      ok(data.shouldPass, "Success callback was called for case " + gTestCount);
+      is(result, data.ret, "Return value should match for case " + gTestCount);
+      SimpleTest.executeSoon(testNextRemove);
+    }, function(err) {
+      ok(!data.shouldPass, "Error callback was called for case " + gTestCount + '. Error: ' + err.name);
+      SimpleTest.executeSoon(testNextRemove);
+    });
+    return;
+  }
+
+  if (gDeep) {
+    // Test "remove" after "removeDeep".
+    gDeep = false;
+    runTest();
+    return;
+  }
+
+  devicestorage_cleanup();
+}
+
+function getSuccess(r) {
+  ok(r, "[" + gGetCount +"] Should get the file - " + gPath + ".");
+  switch (gGetCount) {
+    case 0:
+      gRoot = r;
+      // Get sub1
+      gPath = "sub1";
+      gRoot.get("sub1").then(getSuccess, cbError);
+      break;
+    case 1:
+      gSub1 = r;
+      // Get sub1/sub2
+      gPath = "sub1/sub2";
+      gRoot.get("sub1/sub2").then(getSuccess, cbError);
+      break;
+    case 2:
+      gSub2 = r;
+      // Get sub1/sub2/a.png.
+      gPath = "sub1/sub2/a.png";
+      gRoot.get("sub1/sub2/a.png").then(getSuccess, cbError);
+      break;
+    case 3:
+      gFileA = r;
+      // Get sub/b.png.
+      gPath = "sub/b.png";
+      gRoot.get("sub/b.png").then(getSuccess, cbError);
+      break;
+    case 4:
+      gFileB = r;
+      createTests();
+      testNextRemove();
+      break;
+    default:
+      ok(false, "Should not arrive at getSuccess!");
+      devicestorage_cleanup();
+      break;
+  }
+  gGetCount++;
+}
+
+function cbError(e) {
+  ok(false, "Should not arrive at cbError! Error: " + e.name);
+  devicestorage_cleanup();
+}
+
+ok(navigator.getDeviceStorage, "Should have getDeviceStorage.");
+
+let gStorage = navigator.getDeviceStorage("pictures");
+ok(gStorage, "Should have gotten a storage.");
+
+// Test "removeDeep" first.
+gDeep = true;
+runTest();
+
+</script>
+</pre>
+</body>
+</html>
+

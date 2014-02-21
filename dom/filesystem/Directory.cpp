@@ -9,12 +9,14 @@
 #include "CreateDirectoryTask.h"
 #include "FilesystemPermissionRequest.h"
 #include "GetFileOrDirectoryTask.h"
+#include "RemoveTask.h"
 
 #include "nsCharSeparatedTokenizer.h"
 #include "nsStringGlue.h"
 #include "mozilla/dom/DirectoryBinding.h"
 #include "mozilla/dom/FilesystemBase.h"
 #include "mozilla/dom/FilesystemUtils.h"
+#include "mozilla/dom/UnionTypes.h"
 
 // Resolve the name collision of Microsoft's API name with macros defined in
 // Windows header files. Undefine the macro of CreateDirectory to avoid
@@ -121,6 +123,74 @@ Directory::Get(const nsAString& aPath)
   task->SetError(error);
   FilesystemPermissionRequest::RequestForTask(task);
   return task->GetPromise();
+}
+
+already_AddRefed<Promise>
+Directory::Remove(const StringOrFileOrDirectory& aPath)
+{
+  return RemoveInternal(aPath, false);
+}
+
+already_AddRefed<Promise>
+Directory::RemoveDeep(const StringOrFileOrDirectory& aPath)
+{
+  return RemoveInternal(aPath, true);
+}
+
+already_AddRefed<Promise>
+Directory::RemoveInternal(const StringOrFileOrDirectory& aPath, bool aDeep)
+{
+  nsRefPtr<FilesystemBase> fs = do_QueryReferent(mFilesystem);
+
+  nsresult error = NS_OK;
+  nsString realPath;
+  nsCOMPtr<nsIDOMFile> file;
+
+  if (!fs) {
+    goto parameters_check_done;
+  }
+
+  // Check and get the target path.
+
+  if (aPath.IsFile()) {
+    file = aPath.GetAsFile();
+    if (!fs->IsSafeFile(file)) {
+      error = NS_ERROR_DOM_SECURITY_ERR;
+    }
+    goto parameters_check_done;
+  }
+
+  if (aPath.IsString()) {
+    if (!DOMPathToRealPath(aPath.GetAsString(), realPath)) {
+      error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
+    }
+    goto parameters_check_done;
+  }
+
+  if (!fs->IsSafeDirectory(&aPath.GetAsDirectory())) {
+    error = NS_ERROR_DOM_SECURITY_ERR;
+    goto parameters_check_done;
+  }
+
+  realPath = aPath.GetAsDirectory().mPath;
+  // The target must be a descendant of this directory.
+  if (!FilesystemUtils::IsDescendantPath(mPath, realPath)) {
+    error = NS_ERROR_DOM_FILESYSTEM_NO_MODIFICATION_ALLOWED_ERR;
+  }
+
+parameters_check_done:
+
+  nsRefPtr<RemoveTask> task = new RemoveTask(fs, mPath, file, realPath, aDeep);
+  task->SetError(error);
+  FilesystemPermissionRequest::RequestForTask(task);
+  return task->GetPromise();
+}
+
+already_AddRefed<FilesystemBase>
+Directory::GetFilesystem()
+{
+  nsRefPtr<FilesystemBase> filesystem = do_QueryReferent(mFilesystem);
+  return filesystem.forget();
 }
 
 bool
