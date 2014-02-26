@@ -1082,5 +1082,15 @@ Promise::ArgumentToJSValue(const nsAString& aArgument,
   return true;
 }
 
+bool
+Promise::ArgumentToJSValue(bool aArgument,
+                           JSContext* aCx,
+                           JSObject* aScope,
+                           JS::MutableHandle<JS::Value> aValue)
+{
+  aValue.setBoolean(aArgument);
+  return true;
+}
+
 } // namespace dom
 } // namespace mozilla
