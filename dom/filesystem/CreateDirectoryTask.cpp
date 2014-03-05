@@ -98,13 +98,13 @@ CreateDirectoryTask::Work()
     return NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
   }
 
-  bool ret;
-  nsresult rv = file->Exists(&ret);
+  bool fileExists;
+  nsresult rv = file->Exists(&fileExists);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
-  if (ret) {
+  if (fileExists) {
     return NS_ERROR_DOM_FILESYSTEM_PATH_EXISTS_ERR;
   }
 
