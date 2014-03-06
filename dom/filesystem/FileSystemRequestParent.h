@@ -35,6 +35,10 @@ public:
   bool
   Dispatch(ContentParent* aParent, const FileSystemParams& aParams);
 
+protected:
+  virtual bool
+  RecvCommand(const nsString& aCmd) MOZ_OVERRIDE;
+
   virtual void
   ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
 private:

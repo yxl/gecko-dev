@@ -15,6 +15,7 @@ PREPROCESSED_WEBIDL_FILES = [
 ]
 
 WEBIDL_FILES = [
+    'AbortableProgressPromise.webidl',
     'AbstractWorker.webidl',
     'AnalyserNode.webidl',
     'AnimationEvent.webidl',
@@ -71,6 +72,7 @@ WEBIDL_FILES = [
     'DedicatedWorkerGlobalScope.webidl',
     'DelayNode.webidl',
     'DesktopNotification.webidl',
+    'DestinationDict.webidl',
     'DeviceMotionEvent.webidl',
     'DeviceStorage.webidl',
     'Directory.webidl',

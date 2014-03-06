@@ -28,9 +28,10 @@ class PromiseCallback;
 class PromiseInit;
 class PromiseNativeHandler;
 
-class Promise MOZ_FINAL : public nsISupports,
+class Promise : public nsISupports,
                           public nsWrapperCache
 {
+  friend class AbortableProgressPromise;
   friend class NativePromiseCallback;
   friend class PromiseResolverMixin;
   friend class PromiseResolverTask;
@@ -41,7 +42,7 @@ class Promise MOZ_FINAL : public nsISupports,
   friend class WorkerPromiseTask;
   friend class WrapperPromiseCallback;
 
-  ~Promise();
+  virtual ~Promise();
 
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
