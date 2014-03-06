@@ -38,12 +38,22 @@ union FileSystemResponseValue
   FileSystemErrorResponse;
 };
 
+union FileSystemNotifyValue
+{
+  nsString;
+};
+
 sync protocol PFileSystemRequest
 {
   manager PContent;
 
 child:
   __delete__(FileSystemResponseValue response);
+
+  Notify(FileSystemNotifyValue value);
+
+parent:
+  Command(nsString cmd);
 };
 
 } // namespace dom
