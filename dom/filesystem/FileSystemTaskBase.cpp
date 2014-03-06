@@ -152,6 +152,70 @@ FileSystemTaskBase::Recv__delete__(const FileSystemResponseValue& aValue)
   return true;
 }
 
+void
+FileSystemTaskBase::Notify(const FileSystemNotifyValue& aValue)
+{
+  class Runnable MOZ_FINAL : public nsRunnable
+  {
+  public:
+    Runnable(FileSystemTaskBase* aTask,
+             FileSystemRequestParent* aParent,
+             const FileSystemNotifyValue& aValue)
+      : mTask(aTask)
+      , mRequestParent(aParent)
+      , mValue(aValue)
+    {
+    }
+
+    virtual nsresult
+    Run() MOZ_OVERRIDE
+    {
+      MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
+
+      if (!mRequestParent) {
+        mTask->RecvNotify(mValue);
+        return NS_OK;
+      }
+      if (mRequestParent->IsRunning()) {
+        unused << mRequestParent->SendNotify(mValue);
+      }
+      return NS_OK;
+    }
+
+  private:
+    nsRefPtr<FileSystemTaskBase> mTask;
+    nsRefPtr<FileSystemRequestParent> mRequestParent;
+    FileSystemNotifyValue mValue;
+  };
+
+  nsCOMPtr<nsIRunnable> runnable = new Runnable(this, mRequestParent, aValue);
+  NS_DispatchToMainThread(runnable);
+}
+
+bool
+FileSystemTaskBase::RecvNotify(const FileSystemNotifyValue& aValue)
+{
+  MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
+  return true;
+}
+
+void
+FileSystemTaskBase::RecvCommand(const nsString& aCmd)
+{
+  MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
+}
+
+void
+FileSystemTaskBase::Command(const nsString& aCmd)
+{
+  MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
+  if (FileSystemUtils::IsParentProcess()) {
+    RecvCommand(aCmd);
+    return;
+  }
+  SendCommand(aCmd);
+}
+
 BlobParent*
 FileSystemTaskBase::GetBlobParent(nsIDOMFile* aFile) const
 {

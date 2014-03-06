@@ -8,6 +8,7 @@
 #include "CreateDirectoryTask.h"
 #include "CreateFileTask.h"
 #include "GetFileOrDirectoryTask.h"
+#include "MoveTask.h"
 #include "RemoveTask.h"
 
 #include "mozilla/AppProcessChecker.h"
@@ -43,6 +44,7 @@ FileSystemRequestParent::Dispatch(ContentParent* aParent,
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(CreateDirectory)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(CreateFile)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(GetFileOrDirectory)
+    FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(Move)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(Remove)
 
     default: {
@@ -73,6 +75,12 @@ FileSystemRequestParent::Dispatch(ContentParent* aParent,
   }
 
   task->Start();
+  return true;
+}
+
+bool
+FileSystemRequestParent::RecvCommand(const nsString& aCmd)
+{
   return true;
 }
 

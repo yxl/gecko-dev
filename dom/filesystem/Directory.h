@@ -30,9 +30,11 @@
 namespace mozilla {
 namespace dom {
 
+class AbortableProgressPromise;
 class CreateFileOptions;
 class FileSystemBase;
 class Promise;
+class StringOrDirectoryOrDestinationDict;
 class StringOrFileOrDirectory;
 
 class Directory MOZ_FINAL
@@ -69,6 +71,10 @@ public:
 
   already_AddRefed<Promise>
   Get(const nsAString& aPath);
+
+  already_AddRefed<AbortableProgressPromise>
+  Move(const StringOrFileOrDirectory& aPath,
+       const StringOrDirectoryOrDestinationDict& aDest);
 
   already_AddRefed<Promise>
   Remove(const StringOrFileOrDirectory& aPath);

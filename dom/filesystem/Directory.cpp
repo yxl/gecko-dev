@@ -10,6 +10,7 @@
 #include "CreateFileTask.h"
 #include "FileSystemPermissionRequest.h"
 #include "GetFileOrDirectoryTask.h"
+#include "MoveTask.h"
 #include "RemoveTask.h"
 
 #include "nsCharSeparatedTokenizer.h"
@@ -157,6 +158,92 @@ Directory::Get(const nsAString& aPath)
   }
   nsRefPtr<GetFileOrDirectoryTask> task = new GetFileOrDirectoryTask(
     mFileSystem, realPath, false);
+  task->SetError(error);
+  FileSystemPermissionRequest::RequestForTask(task);
+  return task->GetPromise();
+}
+
+already_AddRefed<AbortableProgressPromise>
+Directory::Move(const StringOrFileOrDirectory& aPath,
+                const StringOrDirectoryOrDestinationDict& aDest)
+{
+  nsRefPtr<FileSystemBase> fs = do_QueryReferent(mFileSystem);
+
+  nsresult error = NS_OK;
+  nsString srcPath;
+  nsCOMPtr<nsIDOMFile> srcFile;
+  Directory* destDir = nullptr;
+  nsString destDirPath;
+  nsString destName;
+  nsAutoString destPath;
+
+  if (!fs) {
+    goto parameters_check_done;
+  }
+
+  // Check and get the source path.
+  if (aPath.IsFile()) {
+    srcFile = aPath.GetAsFile();
+  } else if (aPath.IsString()) {
+    if (!DOMPathToRealPath(aPath.GetAsString(), srcPath)) {
+      error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
+      goto parameters_check_done;
+    }
+  } else {
+    Directory& dir = aPath.GetAsDirectory();
+    if (!fs->IsSafeDirectory(&dir)) {
+      error = NS_ERROR_DOM_FILESYSTEM_NO_MODIFICATION_ALLOWED_ERR;
+      goto parameters_check_done;
+    }
+    srcPath = dir.mPath;
+    if (!FileSystemUtils::IsDescendantPath(mPath, srcPath)) {
+      error = NS_ERROR_DOM_SECURITY_ERR;
+      goto parameters_check_done;
+    }
+  }
+
+  // Check and get the destination path.
+  if (aDest.IsDirectory()) {
+    destDir = &aDest.GetAsDirectory();
+    // The destination name is not specified. It should be the same with that of
+    // the source.
+    destName = Substring(srcPath,
+               srcPath.RFindChar(FileSystemUtils::kSeparatorChar) + 1);
+  } else if (aDest.IsString()) {
+    destDir = this;
+    destName = aDest.GetAsString();
+  } else {
+    auto& dict = aDest.GetAsDestinationDict();
+    if (!(dict.mDir.WasPassed() && dict.mName.WasPassed())) {
+      error = NS_ERROR_DOM_FILESYSTEM_INVALID_PARAMETERS_ERR;
+      goto parameters_check_done;
+    }
+    destDir = &dict.mDir.Value();
+    destName = dict.mName.Value();
+  }
+
+  if (!fs->IsSafeDirectory(destDir)) {
+    error = NS_ERROR_DOM_FILESYSTEM_NO_MODIFICATION_ALLOWED_ERR;
+    goto parameters_check_done;
+  }
+
+  destDirPath = destDir->mPath;
+
+  if (!destDir->DOMPathToRealPath(destName, destPath)) {
+    error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
+    goto parameters_check_done;
+  }
+
+  // Cannot move a directory into its descendant or move an entry to itself.
+  if (!srcFile && (destPath == srcPath ||
+                   FileSystemUtils::IsDescendantPath(srcPath, destPath))) {
+    error = NS_ERROR_DOM_FILESYSTEM_INVALID_MODIFICATION_ERR;
+  }
+
+parameters_check_done:
+
+  nsRefPtr<MoveTask> task = new MoveTask(fs, mPath, srcPath, srcFile,
+    destDirPath, destName, error);
   task->SetError(error);
   FileSystemPermissionRequest::RequestForTask(task);
   return task->GetPromise();

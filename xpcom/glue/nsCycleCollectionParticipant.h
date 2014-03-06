@@ -978,6 +978,13 @@ static NS_CYCLE_COLLECTION_INNERCLASS NS_CYCLE_COLLECTION_INNERNAME;
  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(_f16)                                       \
  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
+#define NS_IMPL_CYCLE_COLLECTION_INHERITED_0(_class, _base)                    \
+ NS_IMPL_CYCLE_COLLECTION_CLASS(_class)                                        \
+ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(_class, _base)                \
+ NS_IMPL_CYCLE_COLLECTION_UNLINK_END                                           \
+ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(_class, _base)              \
+ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
 #define NS_IMPL_CYCLE_COLLECTION_INHERITED_1(_class, _base, _f1)               \
  NS_IMPL_CYCLE_COLLECTION_CLASS(_class)                                        \
  NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(_class, _base)                \
