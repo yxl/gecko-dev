@@ -316,6 +316,22 @@ var BrowserApp = {
 
       if (document.mozFullScreen)
         showFullScreenWarning();
+
+      // Stop all the videos if fullscreen mode is exited.
+      if (document.mozFullScreen) {
+        return;
+      }
+      let doc = BrowserApp.selectedBrowser.contentDocument;
+      let videos = doc.getElementsByTagName("video");
+      for (let i = 0; i < videos.length; i++) {
+        let v = videos[i];
+        if (v.getAttribute('hideControlsOnFullScreenExited')) {
+          v.controls = false;
+        }
+        v.removeAttribute('hideControlsOnFullScreenExited');
+        v.pause();
+      }
+
     }, false);
 
     // When a restricted key is pressed in DOM full-screen mode, we should display
@@ -3366,8 +3382,30 @@ Tab.prototype = {
 
   handleEvent: function(aEvent) {
     switch (aEvent.type) {
+      case "play": {
+        let target = aEvent.originalTarget;
+        let doc = target.ownerDocument;
+        // Ignore on frames and other documents
+        if (doc != this.browser.contentDocument || doc.mozFullScreenElement) {
+          return;
+        }
+        target.mozRequestFullScreen();
+        if (!target.controls) {
+          target.controls = true;
+          target.setAttribute('hideControlsOnFullScreenExited', true);
+        }
+        break;
+      }
+      case "unload": {
+        this.browser.contentWindow.removeEventListener("play", this, true);
+        this.browser.contentWindow.removeEventListener("unload", this, true);
+        break;
+      }
       case "DOMContentLoaded": {
         let target = aEvent.originalTarget;
+
+        this.browser.contentWindow.addEventListener("play", this, true);
+        this.browser.contentWindow.addEventListener("unload", this, true);
 
         LoginManagerContent.onContentLoaded(aEvent);
 
