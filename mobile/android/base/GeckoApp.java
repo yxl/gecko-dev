@@ -1122,6 +1122,12 @@ public abstract class GeckoApp
 
                 if (Build.VERSION.SDK_INT >= 11)
                     window.getDecorView().setSystemUiVisibility(fullscreen ? 1 : 0);
+                final GeckoScreenOrientationListener l = GeckoScreenOrientationListener.getInstance();
+                if (fullscreen) {
+                  l.lockScreenOrientation(GeckoScreenOrientationListener.eScreenOrientation_LandscapePrimary);
+                } else {
+                  l.unlockScreenOrientation();
+                }
             }
         });
     }
