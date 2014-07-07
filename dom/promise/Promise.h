@@ -50,7 +50,7 @@ public:
   Notify(JSContext* aCx, workers::Status aStatus) MOZ_OVERRIDE;
 };
 
-class Promise MOZ_FINAL : public nsISupports,
+class Promise : public nsISupports,
                           public nsWrapperCache,
                           public SupportsWeakPtr<Promise>
 {
@@ -64,8 +64,6 @@ class Promise MOZ_FINAL : public nsISupports,
   friend class ResolvePromiseCallback;
   friend class ThenableResolverTask;
   friend class WrapperPromiseCallback;
-
-  ~Promise();
 
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -159,11 +157,31 @@ public:
 
   void AppendNativeHandler(PromiseNativeHandler* aRunnable);
 
-private:
+protected:
   // Do NOT call this unless you're Promise::Create.  I wish we could enforce
   // that from inside this class too, somehow.
   Promise(nsIGlobalObject* aGlobal);
 
+  virtual
+  ~Promise();
+
+  // Queue an async task to current main or worker thread.
+  static void
+  DispatchToMainOrWorkerThread(nsIRunnable* aRunnable);
+
+  void
+  CreateWrapper(nsIGlobalObject* aGlobal, ErrorResult& aRv);
+
+  void
+  CallInitFunction(const GlobalObject& aGlobal, PromiseInit& aInit,
+                   ErrorResult& aRv);
+
+  bool
+  IsPending()
+  {
+    return mResolvePending;
+  }
+private:
   friend class PromiseDebugging;
 
   enum PromiseState {
@@ -188,10 +206,6 @@ private:
   {
     mResult = aValue;
   }
-
-  // Queue an async task to current main or worker thread.
-  static void
-  DispatchToMainOrWorkerThread(nsIRunnable* aRunnable);
 
   // This method processes promise's resolve/reject callbacks with promise's
   // result. It's executed when the resolver.resolve() or resolver.reject() is
