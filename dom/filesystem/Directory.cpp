@@ -223,7 +223,7 @@ Directory::Move(const StringOrFileOrDirectory& aPath,
 {
   nsresult error = NS_OK;
   nsString srcPath;
-  nsCOMPtr<nsIDOMFile> srcFile;
+  nsRefPtr<DOMFileImpl> srcFile;
   Directory* destDir = nullptr;
   nsString destDirPath;
   nsString destName;
@@ -234,7 +234,7 @@ Directory::Move(const StringOrFileOrDirectory& aPath,
 
   // Check and get the source path.
   if (aPath.IsFile()) {
-    srcFile = aPath.GetAsFile();
+    srcFile = static_cast<DOMFile*>(aPath.GetAsFile())->Impl();
   } else if (aPath.IsString()) {
     if (!DOMPathToRealPath(aPath.GetAsString(), srcPath)) {
       error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;

@@ -11,7 +11,7 @@
 #include "mozilla/dom/FileSystemBase.h"
 #include "mozilla/dom/FileSystemUtils.h"
 #include "mozilla/unused.h"
-#include "nsIDOMFile.h"
+#include "nsDOMFile.h"
 #include "nsIFile.h"
 #include "nsISimpleEnumerator.h"
 #include "nsStringGlue.h"
@@ -24,14 +24,14 @@ NS_IMPL_ISUPPORTS_INHERITED0(MoveTask, FileSystemTaskBase)
 MoveTask::MoveTask(FileSystemBase* aFileSystem,
                    const nsAString& aDirPath,
                    const nsAString& aSrcPath,
-                   nsIDOMFile* aSrcFile,
+                   DOMFileImpl* aSrcFile,
                    const nsAString& aDestDirectory,
                    const nsAString& aDestName,
                    nsresult aErrorValue)
   : FileSystemTaskBase(aFileSystem)
   , mDirRealPath(aDirPath)
   , mSrcRealPath(aSrcPath)
-  , mSrcFile(aSrcFile)
+  , mSrcFileImpl(aSrcFile)
   , mDestDirectory(aDestDirectory)
   , mDestName(aDestName)
 {
@@ -64,8 +64,8 @@ MoveTask::MoveTask(FileSystemBase* aFileSystem,
   } else {
     BlobParent* bp = static_cast<BlobParent*>(static_cast<PBlobParent*>(src));
     nsCOMPtr<nsIDOMBlob> blob = bp->GetBlob();
-    mSrcFile = do_QueryInterface(blob);
-    MOZ_ASSERT(blob, "mSrcFile should not be null.");
+    MOZ_ASSERT(blob);
+    mSrcFileImpl = static_cast<DOMFile*>(blob.get())->Impl();
   }
 
   mDestDirectory = aParam.destDirectory();
@@ -91,9 +91,10 @@ MoveTask::GetRequestParams(const nsString& aFileSystem) const
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   FileSystemMoveParams param;
   param.filesystem() = aFileSystem;
-  if (mSrcFile) {
+  if (mSrcFileImpl) {
+    nsRefPtr<DOMFile> file = new DOMFile(mSrcFileImpl);
     BlobChild* actor
-      = ContentChild::GetSingleton()->GetOrCreateActorForBlob(mSrcFile);
+      = ContentChild::GetSingleton()->GetOrCreateActorForBlob(file);
     if (actor) {
       param.src() = actor;
     }
@@ -131,8 +132,8 @@ MoveTask::Work()
   }
 
   // Get the DOM path if a DOMFile is passed as the target.
-  if (mSrcFile) {
-    if (!mFileSystem->GetRealPath(mSrcFile, mSrcRealPath)) {
+  if (mSrcFileImpl) {
+    if (!mFileSystem->GetRealPath(mSrcFileImpl, mSrcRealPath)) {
       return NS_ERROR_DOM_SECURITY_ERR;
     }
     if (!FileSystemUtils::IsDescendantPath(mDirRealPath, mSrcRealPath)) {

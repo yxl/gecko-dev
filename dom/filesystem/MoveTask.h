@@ -15,6 +15,7 @@
 namespace mozilla {
 namespace dom {
 
+class DOMFileImpl;
 class AbortablePromise;
 
 class MoveTask MOZ_FINAL
@@ -26,7 +27,7 @@ public:
   MoveTask(FileSystemBase* aFileSystem,
            const nsAString& aDirPath,
            const nsAString& aSrcPath,
-           nsIDOMFile* aSrcFile,
+           DOMFileImpl* aSrcFile,
            const nsAString& aDestDirectory,
            const nsAString& aDestName,
            nsresult aErrorValue);
@@ -68,7 +69,9 @@ private:
   nsRefPtr<AbortablePromise> mAbortablePromise;
   nsString mDirRealPath;
   nsString mSrcRealPath;
-  nsCOMPtr<nsIDOMFile> mSrcFile;
+  // This cannot be a DOMFile because this object will be used on a different
+  // thread and DOMFile is not thread-safe. Let's use the DOMFileImpl instead.
+  nsRefPtr<DOMFileImpl> mSrcFileImpl;
   nsString mDestDirectory;
   nsString mDestName;
 };
