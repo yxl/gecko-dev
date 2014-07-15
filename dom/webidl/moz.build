@@ -85,6 +85,7 @@ WEBIDL_FILES = [
     'DedicatedWorkerGlobalScope.webidl',
     'DelayNode.webidl',
     'DesktopNotification.webidl',
+    'DestinationDict.webidl',
     'DeviceMotionEvent.webidl',
     'DeviceStorage.webidl',
     'Directory.webidl',
