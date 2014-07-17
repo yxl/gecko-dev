@@ -7,6 +7,7 @@
 TEST_DIRS += ['tests']
 
 EXPORTS.mozilla.dom += [
+    'AbortableProgressPromise.h',
     'AbortablePromise.h',
     'NativeAbortableHandler.h',
     'Promise.h',
@@ -17,6 +18,7 @@ EXPORTS.mozilla.dom += [
 
 UNIFIED_SOURCES += [
     'AbortableCallback.cpp',
+    'AbortableProgressPromise.cpp',
     'AbortablePromise.cpp',
     'Promise.cpp',
     'PromiseCallback.cpp',
