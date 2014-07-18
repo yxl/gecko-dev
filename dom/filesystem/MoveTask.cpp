@@ -196,13 +196,15 @@ MoveTask::Work()
   rv = destFile->GetParent(getter_AddRefs(destParent));
   nsString destName;
   rv = destFile->GetLeafName(destName);
-  rv = srcFile->RenameTo(destParent, destName);
-  if (NS_ERROR_FILE_ACCESS_DENIED != rv) {
-    return rv;
-  }
   if (isFile) {
+    //Todo: mAbortablePromise->MaybeRejectBrokenly(mSrcRealPath);
     rv = srcFile->MoveTo(destParent, destName);
   } else if (isDirectory) {
+    rv = srcFile->RenameTo(destParent, destName);
+    if (NS_ERROR_FILE_ACCESS_DENIED != rv) {
+      //Todo: mAbortablePromise->MaybeRejectBrokenly(mSrcRealPath);
+      return rv;
+    }
     rv = MoveDirectory(srcFile, destRealPath);
   }
   return rv;
@@ -223,20 +225,31 @@ MoveTask::MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPat
     if (NS_FAILED((rv = enumerator->GetNext(getter_AddRefs(next))))) {
       break;
     }
-    nsCOMPtr<nsIFile> subfile = do_QueryInterface(next);
-    if (!subfile) {
+    nsCOMPtr<nsIFile> subFile = do_QueryInterface(next);
+    if (!subFile) {
       continue;
     }
     bool isSubDirectory;
-    subfile->IsDirectory(&isSubDirectory);
+    subFile->IsDirectory(&isSubDirectory);
     nsString destName;
-    subfile->GetLeafName(destName);
+    subFile->GetLeafName(destName);
     if (!isSubDirectory) {
       nsCOMPtr<nsIFile> destFile = mFileSystem->GetLocalFile(destRealPath);
       if (!destFile) {
         return NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
       }
-      rv = subfile->MoveTo(destFile, destName);
+
+      nsString srcSubPath;
+      rv = subFile->GetPath(srcSubPath);
+      if (NS_FAILED(rv)) {
+        break;
+      }
+      nsString srcSubRealPath;
+      srcSubRealPath = Substring(srcSubPath,
+        srcSubPath.RFind(mSrcRealPath));
+      //Todo: mAbortablePromise->MaybeRejectBrokenly(srcSubRealPath);
+
+      rv = subFile->MoveTo(destFile, destName);
       if (NS_FAILED(rv)) {
         break;
       }
@@ -245,7 +258,7 @@ MoveTask::MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPat
       destSubRealPath = destRealPath +
                  NS_LITERAL_STRING(FILESYSTEM_DOM_PATH_SEPARATOR) +
                  destName;
-      rv = MoveDirectory(subfile, destSubRealPath);
+      rv = MoveDirectory(subFile, destSubRealPath);
       if (NS_FAILED(rv)) {
         break;
       }
