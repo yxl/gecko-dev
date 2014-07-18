@@ -13,7 +13,7 @@ callback VoidAnyCallback = void (optional any value);
  * The first two arguments are the same as those of PromiseInit. They are
  * callbacks that can be used to reject or resolve the promise.
  * The 3rd argument can be used to notify about progress and has the signature
- * of VoidAnyCallback.  
+ * of VoidAnyCallback.
  */
 callback ProgressPromiseInit = void (object resolve, object reject, object progress);
 

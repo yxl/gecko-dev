@@ -35,9 +35,6 @@ public:
            const FileSystemMoveParams& aParam,
            FileSystemRequestParent* aParent);
 
-  virtual
-  ~MoveTask();
-
   already_AddRefed<AbortablePromise>
   GetAbortablePromise();
 
@@ -65,6 +62,8 @@ protected:
 
   nsresult MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPath);
 private:
+  virtual
+  ~MoveTask();
 
   nsRefPtr<AbortablePromise> mAbortablePromise;
   nsString mDirRealPath;

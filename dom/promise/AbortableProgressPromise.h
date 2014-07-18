@@ -20,6 +20,8 @@ class VoidAnyCallback;
 class AbortableProgressPromise  MOZ_FINAL
   : public AbortablePromise
 {
+  friend class ProgressCallbackTask;
+  friend class WorkerProgressCallbackTask;
 public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(AbortableProgressPromise, AbortablePromise)
@@ -29,16 +31,9 @@ public:
   AbortableProgressPromise(nsIGlobalObject* aGlobal,
                    NativeAbortableHandler* aAbortable);
 
-  void NotifyProgress(JSContext* aCx, JS::Handle<JS::Value> aValue);
-protected:
-  // Constructor used to create AbortableProgressPromise for JavaScript. It
-  // should be called by the static AbortableProgressPromise::Constructor.
-  AbortableProgressPromise(nsIGlobalObject* aGlobal);
+  void
+  NotifyProgress(const Optional<JS::Handle<JS::Value>>& aValue);
 
-  virtual
-  ~AbortableProgressPromise();
-
-public:
   virtual JSObject*
   WrapObject(JSContext* aCx) MOZ_OVERRIDE;
 
@@ -47,9 +42,27 @@ public:
               AbortCallback& aAbortCallback, ErrorResult& aRv);
 
   already_AddRefed<AbortableProgressPromise>
-  Progress(VoidAnyCallback& callback);
+  Progress(VoidAnyCallback& aCallback);
 
-protected:
+private:
+  // Static methods for the ProgressPromiseInit functions.
+  static bool
+  JSProgressCallback(JSContext *aCx, unsigned aArgc, JS::Value *aVp);
+
+  // Constructor used to create AbortableProgressPromise for JavaScript. It
+  // should be called by the static AbortableProgressPromise::Constructor.
+  AbortableProgressPromise(nsIGlobalObject* aGlobal);
+
+  virtual
+  ~AbortableProgressPromise();
+
+  JSObject*
+  CreateProgressFunction(JSContext* aCx, JSObject* aParent);
+
+  void
+  NotifyProgressInternal(const Optional<JS::Handle<JS::Value>>& aValue);
+
+  nsTArray<nsRefPtr<VoidAnyCallback> > mProgressCallbacks;
 };
 
 } // namespace dom

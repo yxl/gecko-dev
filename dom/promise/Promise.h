@@ -52,6 +52,7 @@ public:
 class Promise : public nsISupports,
                 public nsWrapperCache
 {
+  friend class AbortableProgressPromise;
   friend class AbortablePromise;
   friend class NativePromiseCallback;
   friend class PromiseResolverMixin;
