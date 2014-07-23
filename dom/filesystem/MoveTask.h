@@ -9,14 +9,14 @@
 
 #include "mozilla/dom/FileSystemTaskBase.h"
 #include "mozilla/dom/NativeAbortableHandler.h"
-#include "mozilla/dom/AbortablePromise.h"
+#include "mozilla/dom/AbortableProgressPromise.h"
 #include "nsAutoPtr.h"
 
 namespace mozilla {
 namespace dom {
 
 class DOMFileImpl;
-class AbortablePromise;
+class AbortableProgressPromise;
 
 class MoveTask MOZ_FINAL
   : public FileSystemTaskBase
@@ -35,8 +35,8 @@ public:
            const FileSystemMoveParams& aParam,
            FileSystemRequestParent* aParent);
 
-  already_AddRefed<AbortablePromise>
-  GetAbortablePromise();
+  already_AddRefed<AbortableProgressPromise>
+  GetAbortableProgressPromise();
 
   virtual void
   GetPermissionAccessType(nsCString& aAccess) const MOZ_OVERRIDE;
@@ -65,7 +65,7 @@ private:
   virtual
   ~MoveTask();
 
-  nsRefPtr<AbortablePromise> mAbortablePromise;
+  nsRefPtr<AbortableProgressPromise> mAbortableProgressPromise;
   nsString mDirRealPath;
   nsString mSrcRealPath;
   // This cannot be a DOMFile because this object will be used on a different

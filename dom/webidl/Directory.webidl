@@ -98,14 +98,14 @@ interface Directory {
    * will be sent as progress value of the AbortableProgressPromise.
    *
    * It should be
-   *   AbortablePromise move((DOMString or File or Directory) path,
+   *   AbortableProgressPromise move((DOMString or File or Directory) path,
    *     (DOMString or Directory or DestinationDict) dest);
    * but gecko currently requires the last union argument with Dictionary
    * memeber to be optional.
    */
   [NewObject]
-  // AbortablePromise<void>
-  AbortablePromise move((DOMString or File or Directory) path,
+  // AbortableProgressPromise<void>
+  AbortableProgressPromise move((DOMString or File or Directory) path,
     optional (DOMString or Directory or DestinationDict) dest);
 
   /*

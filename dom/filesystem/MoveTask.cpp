@@ -44,7 +44,7 @@ MoveTask::MoveTask(FileSystemBase* aFileSystem,
   if (!globalObject) {
     return;
   }
-  mAbortablePromise = new AbortablePromise(globalObject, this);
+  mAbortableProgressPromise = new AbortableProgressPromise(globalObject, this);
 }
 
 MoveTask::MoveTask(FileSystemBase* aFileSystem,
@@ -74,15 +74,15 @@ MoveTask::MoveTask(FileSystemBase* aFileSystem,
 
 MoveTask::~MoveTask()
 {
-  MOZ_ASSERT(!mAbortablePromise || NS_IsMainThread(),
-             "mAbortablePromise should be released on main thread!");
+  MOZ_ASSERT(!mAbortableProgressPromise || NS_IsMainThread(),
+             "mAbortableProgressPromise should be released on main thread!");
 }
 
-already_AddRefed<AbortablePromise>
-MoveTask::GetAbortablePromise()
+already_AddRefed<AbortableProgressPromise>
+MoveTask::GetAbortableProgressPromise()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
-  return nsRefPtr<AbortablePromise>(mAbortablePromise).forget();
+  return nsRefPtr<AbortableProgressPromise>(mAbortableProgressPromise).forget();
 }
 
 FileSystemParams
@@ -197,12 +197,22 @@ MoveTask::Work()
   nsString destName;
   rv = destFile->GetLeafName(destName);
   if (isFile) {
-    //Todo: mAbortablePromise->MaybeRejectBrokenly(mSrcRealPath);
+    AutoSafeJSContext cx;
+    JSString* strValue = JS_NewUCStringCopyZ(cx, mSrcRealPath.get());
+    JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));
+    Optional<JS::Handle<JS::Value>> aValue;
+    aValue.Value() = valValue;
+    mAbortableProgressPromise->NotifyProgress(aValue);
     rv = srcFile->MoveTo(destParent, destName);
   } else if (isDirectory) {
     rv = srcFile->RenameTo(destParent, destName);
     if (NS_ERROR_FILE_ACCESS_DENIED != rv) {
-      //Todo: mAbortablePromise->MaybeRejectBrokenly(mSrcRealPath);
+      AutoSafeJSContext cx;
+      JSString* strValue = JS_NewUCStringCopyZ(cx, mSrcRealPath.get());
+      JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));
+      Optional<JS::Handle<JS::Value>> aValue;
+      aValue.Value() = valValue;
+      mAbortableProgressPromise->NotifyProgress(aValue);
       return rv;
     }
     rv = MoveDirectory(srcFile, destRealPath);
@@ -247,7 +257,13 @@ MoveTask::MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPat
       nsString srcSubRealPath;
       srcSubRealPath = Substring(srcSubPath,
         srcSubPath.RFind(mSrcRealPath));
-      //Todo: mAbortablePromise->MaybeRejectBrokenly(srcSubRealPath);
+
+      AutoSafeJSContext cx;
+      JSString* strValue = JS_NewUCStringCopyZ(cx, srcSubRealPath.get());
+      JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));
+      Optional<JS::Handle<JS::Value>> aValue;
+      aValue.Value() = valValue;
+      mAbortableProgressPromise->NotifyProgress(aValue);
 
       rv = subFile->MoveTo(destFile, destName);
       if (NS_FAILED(rv)) {
@@ -284,21 +300,21 @@ MoveTask::HandlerCallback()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   if (mFileSystem->IsShutdown()) {
-    mAbortablePromise = nullptr;
+    mAbortableProgressPromise = nullptr;
     return;
   }
 
   if (HasError()) {
     nsRefPtr<DOMError> domError = new DOMError(mFileSystem->GetWindow(),
       mErrorValue);
-    mAbortablePromise->MaybeRejectBrokenly(domError);
-    mAbortablePromise = nullptr;
+    mAbortableProgressPromise->MaybeRejectBrokenly(domError);
+    mAbortableProgressPromise = nullptr;
     return;
   }
 
   
-  mAbortablePromise->MaybeResolve(JS::UndefinedHandleValue);
-  mAbortablePromise = nullptr;
+  mAbortableProgressPromise->MaybeResolve(JS::UndefinedHandleValue);
+  mAbortableProgressPromise = nullptr;
 }
 
 void

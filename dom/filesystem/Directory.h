@@ -33,7 +33,7 @@ namespace dom {
 struct CreateFileOptions;
 class FileSystemBase;
 class Promise;
-class AbortablePromise;
+class AbortableProgressPromise;
 class StringOrDirectoryOrDestinationDict;
 class StringOrFileOrDirectory;
 
@@ -77,7 +77,7 @@ public:
   already_AddRefed<Promise>
   RemoveDeep(const StringOrFileOrDirectory& aPath);
 
-  already_AddRefed<AbortablePromise>
+  already_AddRefed<AbortableProgressPromise>
   Move(const StringOrFileOrDirectory& aPath,
        const StringOrDirectoryOrDestinationDict& aDest);
   // =========== End WebIDL bindings.============

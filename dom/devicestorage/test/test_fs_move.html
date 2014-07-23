@@ -179,7 +179,7 @@ function runTest() {
       });
 
       Promise.all(arr).then(function() {
-        testNextRemove();
+        testNextMove();
       }, function() {
         ok(false, "Failed to get test files.");
         devicestorage_cleanup();
@@ -188,8 +188,8 @@ function runTest() {
   });
 }
 
-function testNextRemove() {
-  ok(true, " in testNextRemove.");
+function testNextMove() {
+  ok(true, " in testNextMove.");
   if (gTestCount < gTestCases.length) {
     let data = gTestCases[gTestCount++];
     let spath;
@@ -210,19 +210,23 @@ function testNextRemove() {
         dpath = gFileMap2[data.dpath];
       }
     } 
-    ok(true, "testNextRemove:" + spath + ":" + dpath);
+    ok(true, "testNextMove:" + spath + ":" + dpath);
     let dir = gFileMap1["/"];
     let promise = dir.move(spath, dpath);
+    ok(true, "testNextMove return: " + promise);
+    promise.progress(function(result) {
+      ok(true, "Promise progress is " + result);
+    });
     if(abort)
       promise.abort();
     promise.then(function(result) {
-      ok(data.shouldPass, "Return value should match to move from" +
+      ok(data.shouldPass, "Return value should match to move from " +
         spath + " to " + dpath);
-      SimpleTest.executeSoon(testNextRemove);
+      SimpleTest.executeSoon(testNextMove);
     }, function(err) {
-      ok(!data.shouldPass, "Error callback was called to move from" +
+      ok(!data.shouldPass, "Error callback was called to move from " +
         spath + " to " + dpath + '. Error: ' + err.name);
-      SimpleTest.executeSoon(testNextRemove);
+      SimpleTest.executeSoon(testNextMove);
     });
     return;
   }

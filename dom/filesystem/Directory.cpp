@@ -217,7 +217,7 @@ parameters_check_done:
   return task->GetPromise();
 }
 
-already_AddRefed<AbortablePromise>
+already_AddRefed<AbortableProgressPromise>
 Directory::Move(const StringOrFileOrDirectory& aPath,
                 const StringOrDirectoryOrDestinationDict& aDest)
 {
@@ -288,12 +288,11 @@ Directory::Move(const StringOrFileOrDirectory& aPath,
     error = NS_ERROR_DOM_FILESYSTEM_INVALID_MODIFICATION_ERR;
   }
 parameters_check_done:
-
   nsRefPtr<MoveTask> task = new MoveTask(mFileSystem, mPath, srcPath, srcFile,
     destDirPath, destName, error);
   task->SetError(error);
   FileSystemPermissionRequest::RequestForTask(task);
-  return task->GetAbortablePromise();
+  return task->GetAbortableProgressPromise();
 }
 
 FileSystemBase*
