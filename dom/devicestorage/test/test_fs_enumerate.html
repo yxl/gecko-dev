@@ -1,0 +1,166 @@
+<!--
+  Any copyright is dedicated to the Public Domain.
+  http://creativecommons.org/publicdomain/zero/1.0/
+-->
+<!DOCTYPE HTML>
+<html> <!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=934368
+-->
+<head>
+  <title>Test Directory#enumerate of the FileSystem API for device storage</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="devicestorage_common.js"></script>
+
+<link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=935883">Mozilla Bug 935883</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+</div>
+<pre id="test">
+<script class="testbody" type="application/javascript;version=1.7">
+
+devicestorage_setup();
+
+let storages = null;
+let gTestCount = 0;
+let gFileMap1 = {};
+let gFileMap2 = {};
+let gTestCases = [
+  // Enumerate a non-existent directory should return false.
+  {
+    spath: "sub",
+    shouldPass: false
+  },
+
+  // Enumerate an existent directory should return true.
+  {
+    spath: "sub1",
+    shouldPass: true
+  },
+
+];
+
+function createTestFiles(storage, callback) {
+  function createTestFile(path) {
+    return new Promise(function(resolve, reject) {
+      function addNamed() {
+        var req = storage.addNamed(createRandomBlob("image/png"), path);
+
+        req.onsuccess = function() {
+          ok(true, path + " was created.");
+          resolve();
+        };
+
+        req.onerror = function(e) {
+          ok(false, "Failed to create " + path + ': ' + e.target.error.name);
+          reject();
+        };
+      }
+
+      // Bug 980136. Check if the file exists before we create.
+      var req = storage.get(path);
+
+      req.onsuccess = function() {
+        ok(true, path + " exists. Do not need to create.");
+        resolve();
+      };
+
+      req.onerror = function(e) {
+        ok(true, path + " does not exists: " + e.target.error.name);
+        addNamed();
+      };
+    });
+  }
+
+  let arr = [];
+
+  ["sub1/sub2/a.png", "sub1/sub3/b.png", "sub1/sub3/sub4/a.png"].forEach(function(path) {
+    arr.push(createTestFile(path));
+  });
+
+  Promise.all(arr).then(function() {
+    callback();
+  }, function() {
+    ok(false, "Failed to created test files.");
+    devicestorage_cleanup();
+  });
+}
+
+function runTest() {
+  gTestCount = 0;
+  createTestFiles(storages[0], function() {
+    function cbError(e) {
+      ok(false, "Should not arrive at cbError! Error: " + e.name);
+      devicestorage_cleanup();
+    }
+
+    function cbSuccess(r) {
+      ok(r, "Should get the file - " + this);
+      gFileMap1[this] = r;
+    }
+    ok(true, " in createTestFiles callback:" + storages.length);
+
+    // Get directory and file objects.
+    storages[0].getRoot().then(function(root) {
+      ok(root, "Should get root directory.");
+      gFileMap1["/"] = root;
+      ok(true, root + " was storages[0].");
+      let arr = [];
+
+      ["sub1"].forEach(function(path) {
+        arr.push(root.get(path).then(cbSuccess.bind(path), cbError));
+      });
+
+      Promise.all(arr).then(function() {
+        testNextEnumerate();
+      }, function() {
+        ok(false, "Failed to get test files.");
+        devicestorage_cleanup();
+      });
+    }, cbError);
+  });
+}
+
+function testNextEnumerate() {
+  ok(true, " in testNextEnumerate.");
+  if (gTestCount < gTestCases.length) {
+    let data = gTestCases[gTestCount++];
+    let spath;
+    let abort;
+    spath = data.spath;
+    ok(true, "testNextEnumerate:" + spath);
+    let dir = gFileMap1["/"];
+    let promise = dir.enumerate(spath);
+    promise.progress(function(result) {
+      ok(true, "Promise progress is " + result);
+    });
+    if(abort)
+      promise.abort();
+    promise.then(function(result) {
+      ok(data.shouldPass, "Return value should match to move from " +
+        spath);
+      SimpleTest.executeSoon(testNextEnumerate);
+    }, function(err) {
+      ok(!data.shouldPass, "Error callback was called to move from " +
+        spath + '. Error: ' + err.name);
+      SimpleTest.executeSoon(testNextEnumerate);
+    });
+    return;
+  }
+  devicestorage_cleanup();
+}
+
+ok(navigator.getDeviceStorages, "Should have getDeviceStorages.");
+
+let storages = navigator.getDeviceStorages("sdcard");
+ok(storages, "Should have gotten a storage.");
+
+runTest();
+
+</script>
+</pre>
+</body>
+</html>
+

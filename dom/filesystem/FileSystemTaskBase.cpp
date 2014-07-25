@@ -16,12 +16,16 @@
 #include "mozilla/unused.h"
 #include "nsDOMFile.h"
 
+using mozilla::MonitorAutoLock;
+
 namespace mozilla {
 namespace dom {
 
 FileSystemTaskBase::FileSystemTaskBase(FileSystemBase* aFileSystem)
   : mErrorValue(NS_OK)
   , mFileSystem(aFileSystem)
+  , mAbort(false)
+  , mMonitor("FileSystemTaskBase::mMonitor")
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   MOZ_ASSERT(aFileSystem, "aFileSystem should not be null.");
@@ -34,6 +38,7 @@ FileSystemTaskBase::FileSystemTaskBase(FileSystemBase* aFileSystem,
   , mFileSystem(aFileSystem)
   , mRequestParent(aParent)
   , mAbort(false)
+  , mMonitor("FileSystemTaskBase::mMonitor")
 {
   MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
              "Only call from parent process!");
@@ -88,6 +93,13 @@ void
 FileSystemTaskBase::Abort()
 {
   mAbort = true;
+}
+
+void
+FileSystemTaskBase::Next()
+{
+  MonitorAutoLock monitor(mMonitor);
+  monitor.Notify();
 }
 
 NS_IMETHODIMP

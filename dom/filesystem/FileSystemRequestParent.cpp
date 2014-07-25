@@ -10,6 +10,7 @@
 #include "GetFileOrDirectoryTask.h"
 #include "RemoveTask.h"
 #include "MoveTask.h"
+#include "EnumerateTask.h"
 #include "mozilla/AppProcessChecker.h"
 #include "mozilla/dom/FileSystemBase.h"
 
@@ -43,6 +44,7 @@ FileSystemRequestParent::Dispatch(ContentParent* aParent,
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(GetFileOrDirectory)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(Remove)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(Move)
+    FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(Enumerate)
 
     default: {
       NS_RUNTIMEABORT("not reached");
@@ -93,6 +95,19 @@ FileSystemRequestParent::RecvAbortMove()
   return true;
 }
 
+bool
+FileSystemRequestParent::RecvAbortEnumerate()
+{
+  mTask->Abort();
+  return true;
+}
+
+bool
+FileSystemRequestParent::RecvNextEnumerate()
+{
+  mTask->Next();
+  return true;
+}
 
 } // namespace dom
 } // namespace mozilla

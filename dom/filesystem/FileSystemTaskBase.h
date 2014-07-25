@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_FileSystemTaskBase_h
 #define mozilla_dom_FileSystemTaskBase_h
 
+#include "mozilla/Monitor.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/FileSystemRequestParent.h"
 #include "mozilla/dom/PFileSystemRequestChild.h"
@@ -130,6 +131,14 @@ public:
   Abort();
 
   /*
+   * Continue the task. If the task is running the child process, it will be
+   * forwarded to parent process by IPC, or else, call mMonitor.Notify() to
+   * do the working task.
+   */
+  void
+  Next();
+
+  /*
    * The error codes are defined in xpcom/base/ErrorList.h and their
    * corresponding error name and message are defined in dom/base/domerr.msg.
    */
@@ -222,6 +231,7 @@ protected:
   nsRefPtr<FileSystemRequestParent> mRequestParent;
 
   bool mAbort;
+  mozilla::Monitor mMonitor;
 private:
   /*
    * After finishing the task operation, handle the task result.
