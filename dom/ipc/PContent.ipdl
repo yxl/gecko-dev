@@ -251,6 +251,14 @@ struct FileSystemMoveParams
   nsString destName;
 };
 
+struct FileSystemEnumerateParams
+{
+  nsString filesystem;
+  nsString directory;
+  FileSystemPathOrFileValue target;
+  bool recursive;
+};
+
 struct FileSystemRemoveParams
 {
   nsString filesystem;
@@ -263,6 +271,7 @@ union FileSystemParams
 {
   FileSystemCreateDirectoryParams;
   FileSystemCreateFileParams;
+  FileSystemEnumerateParams;
   FileSystemGetFileOrDirectoryParams;
   FileSystemMoveParams;
   FileSystemRemoveParams;

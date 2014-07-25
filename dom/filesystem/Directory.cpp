@@ -12,6 +12,7 @@
 #include "GetFileOrDirectoryTask.h"
 #include "RemoveTask.h"
 #include "MoveTask.h"
+#include "EnumerateTask.h"
 #include "nsCharSeparatedTokenizer.h"
 #include "nsString.h"
 #include "mozilla/dom/DirectoryBinding.h"
@@ -290,6 +291,52 @@ Directory::Move(const StringOrFileOrDirectory& aPath,
 parameters_check_done:
   nsRefPtr<MoveTask> task = new MoveTask(mFileSystem, mPath, srcPath, srcFile,
     destDirPath, destName, error);
+  task->SetError(error);
+  FileSystemPermissionRequest::RequestForTask(task);
+  return task->GetAbortableProgressPromise();
+}
+
+already_AddRefed<AbortableProgressPromise>
+Directory::Enumerate(const StringOrDirectory& aPath)
+{
+  return EnumerateInternal(aPath, false);
+}
+
+already_AddRefed<AbortableProgressPromise>
+Directory::EnumerateDeep(const StringOrDirectory& aPath)
+{
+  return EnumerateInternal(aPath, true);
+}
+
+already_AddRefed<AbortableProgressPromise>
+Directory::EnumerateInternal(const StringOrDirectory& aPath, bool aRecursive)
+{
+  nsresult error = NS_OK;
+  nsString realPath;
+
+  // Check and get the target path.
+  if (aPath.IsString()) {
+    if (!DOMPathToRealPath(aPath.GetAsString(), realPath)) {
+      error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
+    }
+    goto parameters_check_done;
+  }
+
+  if (!mFileSystem->IsSafeDirectory(&aPath.GetAsDirectory())) {
+    error = NS_ERROR_DOM_SECURITY_ERR;
+    goto parameters_check_done;
+  }
+
+  realPath = aPath.GetAsDirectory().mPath;
+  // The target must be a descendant of this directory.
+  if (!FileSystemUtils::IsDescendantPath(mPath, realPath)) {
+    error = NS_ERROR_DOM_FILESYSTEM_NO_MODIFICATION_ALLOWED_ERR;
+  }
+
+parameters_check_done:
+
+  nsRefPtr<EnumerateTask> task = new EnumerateTask(mFileSystem, mPath, realPath,
+    aRecursive);
   task->SetError(error);
   FileSystemPermissionRequest::RequestForTask(task);
   return task->GetAbortableProgressPromise();

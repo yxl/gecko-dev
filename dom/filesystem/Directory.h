@@ -36,6 +36,7 @@ class Promise;
 class AbortableProgressPromise;
 class StringOrDirectoryOrDestinationDict;
 class StringOrFileOrDirectory;
+class StringOrDirectory;
 
 class Directory MOZ_FINAL
   : public nsISupports
@@ -80,6 +81,12 @@ public:
   already_AddRefed<AbortableProgressPromise>
   Move(const StringOrFileOrDirectory& aPath,
        const StringOrDirectoryOrDestinationDict& aDest);
+
+  already_AddRefed<AbortableProgressPromise>
+  Enumerate(const StringOrDirectory& aPath);
+
+  already_AddRefed<AbortableProgressPromise>
+  EnumerateDeep(const StringOrDirectory& aPath);
   // =========== End WebIDL bindings.============
 
   FileSystemBase*
@@ -99,6 +106,9 @@ private:
 
   already_AddRefed<Promise>
   RemoveInternal(const StringOrFileOrDirectory& aPath, bool aRecursive);
+
+  already_AddRefed<AbortableProgressPromise>
+  EnumerateInternal(const StringOrDirectory& aPath, bool aRecursive);
 
   nsRefPtr<FileSystemBase> mFileSystem;
   nsString mPath;

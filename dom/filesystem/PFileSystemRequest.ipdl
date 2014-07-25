@@ -47,6 +47,8 @@ child:
 
 parent:
   AbortMove();
+  AbortEnumerate();
+  NextEnumerate();
 };
 
 } // namespace dom

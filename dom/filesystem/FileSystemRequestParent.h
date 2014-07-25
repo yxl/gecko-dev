@@ -38,6 +38,12 @@ public:
 
   virtual bool
   RecvAbortMove() MOZ_OVERRIDE;
+
+  virtual bool
+  RecvAbortEnumerate() MOZ_OVERRIDE;
+
+  virtual bool
+  RecvNextEnumerate() MOZ_OVERRIDE;
 private:
   // Private destructor, to discourage deletion outside of Release():
   virtual

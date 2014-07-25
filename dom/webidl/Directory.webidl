@@ -109,6 +109,21 @@ interface Directory {
     optional (DOMString or Directory or DestinationDict) dest);
 
   /*
+   * Enumerate files and directorys in target directory recursively. The target should be a
+   * descendent of current directory.
+   * @param path If a DOM string is passed, it is the relative path of the
+   * target. Otherwise, the Directory object of the target should be
+   * passed.
+   * @return If the target did not exist, the promise is rejected with a DOM error.
+   * If the target exists, but enumerate the target fails, the promise is
+   * resolved with boolean false. If the target did exist and was successfully
+   * enumerated, the promise is resolved with boolean true.
+   */
+  [NewObject]
+  // AbortableProgressPromise<void>
+  AbortableProgressPromise enumerate((DOMString or Directory) path);
+
+  /*
    * Deletes a file or a directory recursively. The target should be a
    * descendent of current directory.
    * @param path If a DOM string is passed, it is the relative path of the
