@@ -37,10 +37,7 @@ public:
   ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
 
   virtual bool
-  RecvAbortMove() MOZ_OVERRIDE;
-
-  virtual bool
-  RecvAbortEnumerate() MOZ_OVERRIDE;
+  RecvAbort() MOZ_OVERRIDE;
 
   virtual bool
   RecvNextEnumerate() MOZ_OVERRIDE;

@@ -89,14 +89,7 @@ FileSystemRequestParent::ActorDestroy(ActorDestroyReason why)
 }
 
 bool
-FileSystemRequestParent::RecvAbortMove()
-{
-  mTask->Abort();
-  return true;
-}
-
-bool
-FileSystemRequestParent::RecvAbortEnumerate()
+FileSystemRequestParent::RecvAbort()
 {
   mTask->Abort();
   return true;

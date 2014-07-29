@@ -299,6 +299,11 @@ CreateFileTask::HandlerCallback()
 }
 
 void
+CreateFileTask::HandlerNotify(const FileSystemResponseValue& aValue)
+{
+}
+
+void
 CreateFileTask::GetPermissionAccessType(nsCString& aAccess) const
 {
   if (mReplace) {

@@ -171,6 +171,13 @@ FileSystemTaskBase::Recv__delete__(const FileSystemResponseValue& aValue)
   return true;
 }
 
+bool
+FileSystemTaskBase::RecvNotify(const FileSystemResponseValue& aValue)
+{
+  HandlerNotify(aValue);
+  return true;
+}
+
 BlobParent*
 FileSystemTaskBase::GetBlobParent(nsIDOMFile* aFile) const
 {

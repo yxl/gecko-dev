@@ -189,6 +189,13 @@ protected:
   HandlerCallback() = 0;
 
   /*
+   * This function will be called to pass the task notify to the content page.
+   * Override this function to handle the call back to the content page.
+   */
+  virtual void
+  HandlerNotify(const FileSystemResponseValue& aValue) = 0;
+
+  /*
    * Wrap the task parameter to FileSystemParams for sending it through IPC.
    * It will be called when we need to forward a task from the child process to
    * the prarent process.
@@ -221,6 +228,10 @@ protected:
   // Overrides PFileSystemRequestChild
   virtual bool
   Recv__delete__(const FileSystemResponseValue& value) MOZ_OVERRIDE;
+
+  // Overrides PFileSystemRequestChild
+  virtual bool
+  RecvNotify(const FileSystemResponseValue& value) MOZ_OVERRIDE;
 
   BlobParent*
   GetBlobParent(nsIDOMFile* aFile) const;

@@ -20,6 +20,7 @@ SOURCES += [
     'Directory.cpp',
     'EnumerateTask.cpp',
     'FileSystemBase.cpp',
+    'FileSystemNotifyBase.cpp',
     'FileSystemPermissionRequest.cpp',
     'FileSystemRequestParent.cpp',
     'FileSystemTaskBase.cpp',

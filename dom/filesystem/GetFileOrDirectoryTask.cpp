@@ -217,6 +217,11 @@ GetFileOrDirectoryTask::HandlerCallback()
 }
 
 void
+GetFileOrDirectoryTask::HandlerNotify(const FileSystemResponseValue& aValue)
+{
+}
+
+void
 GetFileOrDirectoryTask::GetPermissionAccessType(nsCString& aAccess) const
 {
   aAccess.AssignLiteral("read");

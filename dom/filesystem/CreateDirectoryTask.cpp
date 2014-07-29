@@ -132,6 +132,11 @@ CreateDirectoryTask::HandlerCallback()
 }
 
 void
+CreateDirectoryTask::HandlerNotify(const FileSystemResponseValue& aValue)
+{
+}
+
+void
 CreateDirectoryTask::GetPermissionAccessType(nsCString& aAccess) const
 {
   aAccess.AssignLiteral("create");

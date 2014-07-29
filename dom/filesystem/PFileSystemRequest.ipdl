@@ -44,10 +44,10 @@ sync protocol PFileSystemRequest
 
 child:
   __delete__(FileSystemResponseValue response);
+  Notify(FileSystemResponseValue response);
 
 parent:
-  AbortMove();
-  AbortEnumerate();
+  Abort();
   NextEnumerate();
 };
 

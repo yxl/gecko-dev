@@ -24,12 +24,12 @@ namespace dom {
 NS_IMPL_ISUPPORTS_INHERITED0(EnumerateTask, FileSystemTaskBase)
 
 EnumerateTask::EnumerateTask(FileSystemBase* aFileSystem,
-             const nsAString& aDirPath,
-             const nsAString& aTargetPath,
-             bool aRecursive)
+                             const nsAString& aDirPath,
+                             const nsAString& aTargetPath,
+                             bool aRecursive)
   : FileSystemTaskBase(aFileSystem)
-  , mDirRealPath(aDirPath)
   , mTargetRealPath(aTargetPath)
+  , mDirRealPath(aDirPath)
   , mRecursive(aRecursive)
   , mReturnValue(false)
 {
@@ -46,8 +46,8 @@ EnumerateTask::EnumerateTask(FileSystemBase* aFileSystem,
 }
   
 EnumerateTask::EnumerateTask(FileSystemBase* aFileSystem,
-                   const FileSystemEnumerateParams& aParam,
-                   FileSystemRequestParent* aParent)
+                             const FileSystemEnumerateParams& aParam,
+                             FileSystemRequestParent* aParent)
   : FileSystemTaskBase(aFileSystem, aParam, aParent)
   , mRecursive(false)
   , mReturnValue(false)
@@ -193,14 +193,19 @@ EnumerateTask::EnumerateDirectory(nsCOMPtr<nsIFile> aSrcFile)
   if (mAbort) {
     rv = NS_ERROR_ABORT;
   }
-  /*
-  //send to mAbortableProgressPromise
-  AutoSafeJSContext cx;
-  JSString* strValue = JS_NewUCStringCopyZ(cx, srcSubRealPath.get());
-  JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));
-  Optional<JS::Handle<JS::Value>> aValue;
-  aValue.Value() = valValue;
-  mAbortableProgressPromise->NotifyProgress(aValue);*/
+/*  if (!mRequestParent) {
+    AutoSafeJSContext cx;
+    JSString* strValue = JS_NewUCStringCopyZ(cx, srcSubRealPath.get());
+    JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));
+    Optional<JS::Handle<JS::Value>> aValue;
+    aValue.Value() = valValue;
+    mAbortableProgressPromise->NotifyProgress(aValue);
+  } else {
+    if (!mRequestParent->IsRunning())
+      return NS_OK;
+    notify = new FileSystemNotifyBase(mRequestParent, srcSubRealPath);
+    NS_DispatchToMainThread(notify);
+  }*/
   return rv;
 }
 
@@ -210,7 +215,7 @@ EnumerateTask::AbortCallback() {
     mAbort = true;
     return;
   }
-  SendAbortEnumerate(); 
+  SendAbort(); 
 }
 
 void
@@ -243,6 +248,18 @@ EnumerateTask::HandlerCallback()
   
   mAbortableProgressPromise->MaybeResolve(JS::UndefinedHandleValue);
   mAbortableProgressPromise = nullptr;
+}
+
+void
+EnumerateTask::HandlerNotify(const FileSystemResponseValue& aValue)
+{
+  MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
+/*  AutoSafeJSContext cx;
+  JSString* strValue = JS_NewUCStringCopyZ(cx, aValue.get());
+  JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));
+  Optional<JS::Handle<JS::Value>> aValue;
+  aValue.Value() = valValue;
+  mAbortableProgressPromise->NotifyProgress(aValue);*/
 }
 
 void

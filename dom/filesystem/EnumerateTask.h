@@ -25,12 +25,12 @@ class EnumerateTask MOZ_FINAL
   NS_DECL_ISUPPORTS_INHERITED
 public:
   EnumerateTask(FileSystemBase* aFileSystem,
-             const nsAString& aDirPath,
-             const nsAString& aTargetPath,
-             bool aRecursive);
+                const nsAString& aDirPath,
+                const nsAString& aTargetPath,
+                bool aRecursive);
   EnumerateTask(FileSystemBase* aFileSystem,
-           const FileSystemEnumerateParams& aParam,
-           FileSystemRequestParent* aParent);
+                const FileSystemEnumerateParams& aParam,
+                FileSystemRequestParent* aParent);
 
   already_AddRefed<AbortableProgressPromise>
   GetAbortableProgressPromise();
@@ -58,6 +58,9 @@ protected:
 
   virtual void
   HandlerCallback() MOZ_OVERRIDE;
+
+  virtual void
+  HandlerNotify(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
 
   nsresult EnumerateDirectory(nsCOMPtr<nsIFile> aSrcFile);
 private:
