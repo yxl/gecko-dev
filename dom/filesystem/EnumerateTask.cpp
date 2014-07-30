@@ -241,15 +241,15 @@ EnumerateTask::HandlerCallback()
 void
 EnumerateTask::HandlerNotify()
 {
-  if (mRequestParent) {
+/*  if (mRequestParent) {
     if (mRequestParent->IsRunning())
       unused << mRequestParent->SendNotify();
   } else {
     NotifyProgress();
-  }
+  }*/
 }
 
-void EnumerateTask::NotifyProgress()
+void EnumerateTask::NotifyProgress(const FileSystemResponseValue& aValue)
 {
 /*  AutoSafeJSContext cx;
   JSString* strValue = JS_NewUCStringCopyZ(cx, aValue.get());

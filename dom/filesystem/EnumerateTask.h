@@ -63,7 +63,7 @@ protected:
   HandlerNotify() MOZ_OVERRIDE;
 
   virtual void
-  NotifyProgress() MOZ_OVERRIDE;
+  NotifyProgress(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
 
   nsresult EnumerateDirectory(nsCOMPtr<nsIFile> aSrcFile);
 private:

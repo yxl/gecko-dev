@@ -174,9 +174,9 @@ FileSystemTaskBase::Recv__delete__(const FileSystemResponseValue& aValue)
 }
 
 bool
-FileSystemTaskBase::RecvNotify()
+FileSystemTaskBase::RecvNotify(const FileSystemResponseValue& value)
 {
-  NotifyProgress();
+  NotifyProgress(value);
   return true;
 }
 
@@ -186,7 +186,7 @@ FileSystemTaskBase::HandlerNotify()
 }
 
 void
-FileSystemTaskBase::NotifyProgress()
+FileSystemTaskBase::NotifyProgress(const FileSystemResponseValue& aValue)
 {
 }
 

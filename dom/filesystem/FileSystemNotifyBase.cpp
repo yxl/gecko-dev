@@ -19,7 +19,6 @@ namespace dom {
 FileSystemNotifyBase::FileSystemNotifyBase(FileSystemTaskBase* aTask)
   : mTask(aTask)
 {
-  MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
 }
 
 FileSystemNotifyBase::~FileSystemNotifyBase()

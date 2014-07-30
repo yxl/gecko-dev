@@ -315,22 +315,26 @@ MoveTask::HandlerCallback()
 void
 MoveTask::HandlerNotify()
 {
+  if (mProgressFiles.IsEmpty())
+    return;
+  MutexAutoLock lock(mMutex);
+  FileSystemDirectoryResponse r;
+  r.realPath() = mProgressFiles[0];
+  mProgressFiles.RemoveElementAt(0);
+
   if (mRequestParent) {
     if (mRequestParent->IsRunning())
-      unused << mRequestParent->SendNotify();
+      unused << mRequestParent->SendNotify(r);
   } else {
-    NotifyProgress();
+    NotifyProgress(r);
   }
 }
 
 void
-MoveTask::NotifyProgress()
+MoveTask::NotifyProgress(const FileSystemResponseValue& aValue)
 {
-  if (mProgressFiles.IsEmpty())
-    return;
-  MutexAutoLock lock(mMutex);
-  nsString realPath = mProgressFiles[0];
-  mProgressFiles.RemoveElementAt(0);
+  FileSystemDirectoryResponse r = aValue;
+  nsString realPath = r.realPath();
   AutoSafeJSContext cx;
   JSString* strValue = JS_NewUCStringCopyZ(cx, realPath.get());
   JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));

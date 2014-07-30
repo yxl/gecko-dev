@@ -163,7 +163,7 @@ public:
   HandlerNotify();
 
   virtual void
-  NotifyProgress();
+  NotifyProgress(const FileSystemResponseValue& aValue);
 
   NS_DECL_NSIRUNNABLE
 protected:
@@ -235,7 +235,7 @@ protected:
 
   // Overrides PFileSystemRequestChild
   virtual bool
-  RecvNotify() MOZ_OVERRIDE;
+  RecvNotify(const FileSystemResponseValue& value) MOZ_OVERRIDE;
 
   BlobParent*
   GetBlobParent(nsIDOMFile* aFile) const;

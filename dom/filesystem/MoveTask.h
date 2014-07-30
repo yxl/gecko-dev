@@ -64,7 +64,7 @@ protected:
   HandlerNotify() MOZ_OVERRIDE;
 
   void
-  NotifyProgress() MOZ_OVERRIDE;
+  NotifyProgress(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
 
   nsresult MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPath);
 private:
