@@ -8,7 +8,6 @@
 #define mozilla_dom_MoveTask_h
 
 #include "mozilla/dom/FileSystemTaskBase.h"
-#include "FileSystemNotifyBase.h"
 #include "mozilla/dom/NativeAbortableHandler.h"
 #include "mozilla/dom/AbortableProgressPromise.h"
 #include "nsAutoPtr.h"
@@ -18,7 +17,6 @@ namespace dom {
 
 class DOMFileImpl;
 class AbortableProgressPromise;
-class FileSystemNotifyBase;
 
 class MoveTask MOZ_FINAL
   : public FileSystemTaskBase
@@ -63,7 +61,7 @@ protected:
   HandlerCallback() MOZ_OVERRIDE;
 
   virtual void
-  HandlerNotify(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
+  HandlerNotify(const FileSystemResponseValue& aValue) const MOZ_OVERRIDE;
 
   nsresult MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPath);
 private:

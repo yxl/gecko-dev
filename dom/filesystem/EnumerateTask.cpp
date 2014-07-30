@@ -193,19 +193,10 @@ EnumerateTask::EnumerateDirectory(nsCOMPtr<nsIFile> aSrcFile)
   if (mAbort) {
     rv = NS_ERROR_ABORT;
   }
-/*  if (!mRequestParent) {
-    AutoSafeJSContext cx;
-    JSString* strValue = JS_NewUCStringCopyZ(cx, srcSubRealPath.get());
-    JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));
-    Optional<JS::Handle<JS::Value>> aValue;
-    aValue.Value() = valValue;
-    mAbortableProgressPromise->NotifyProgress(aValue);
-  } else {
-    if (!mRequestParent->IsRunning())
-      return NS_OK;
-    notify = new FileSystemNotifyBase(mRequestParent, srcSubRealPath);
-    NS_DispatchToMainThread(notify);
-  }*/
+/*
+  notify = new FileSystemNotifyBase(this, mRequestParent, srcSubRealPath);
+  NS_DispatchToMainThread(notify);
+  */
   return rv;
 }
 
@@ -251,7 +242,7 @@ EnumerateTask::HandlerCallback()
 }
 
 void
-EnumerateTask::HandlerNotify(const FileSystemResponseValue& aValue)
+EnumerateTask::HandlerNotify(const FileSystemResponseValue& aValue) const
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
 /*  AutoSafeJSContext cx;

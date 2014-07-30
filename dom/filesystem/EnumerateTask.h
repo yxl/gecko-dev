@@ -60,7 +60,7 @@ protected:
   HandlerCallback() MOZ_OVERRIDE;
 
   virtual void
-  HandlerNotify(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
+  HandlerNotify(const FileSystemResponseValue& aValue) const MOZ_OVERRIDE;
 
   nsresult EnumerateDirectory(nsCOMPtr<nsIFile> aSrcFile);
 private:

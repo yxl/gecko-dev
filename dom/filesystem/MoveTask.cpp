@@ -15,6 +15,7 @@
 #include "nsIFile.h"
 #include "nsISimpleEnumerator.h"
 #include "nsStringGlue.h"
+#include "FileSystemNotifyBase.h"
 
 namespace mozilla {
 namespace dom {
@@ -197,37 +198,15 @@ MoveTask::Work()
   nsString destName;
   rv = destFile->GetLeafName(destName);
   if (isFile) {
-    if (!mRequestParent) {
-      AutoSafeJSContext cx;
-      JSString* strValue = JS_NewUCStringCopyZ(cx, mSrcRealPath.get());
-      JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));
-      Optional<JS::Handle<JS::Value>> aValue;
-      aValue.Value() = valValue;
-      mAbortableProgressPromise->NotifyProgress(aValue);
-    } else {
-      if (!mRequestParent->IsRunning())
-        return NS_OK;
-      nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(mRequestParent, mSrcRealPath);
-      NS_DispatchToMainThread(notify);
-    }
+    nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(this, mRequestParent, mSrcRealPath);
+    NS_DispatchToMainThread(notify);
 
     rv = srcFile->MoveTo(destParent, destName);
   } else if (isDirectory) {
     rv = srcFile->RenameTo(destParent, destName);
     if (NS_ERROR_FILE_ACCESS_DENIED != rv) {
-      if (!mRequestParent) {
-        AutoSafeJSContext cx;
-        JSString* strValue = JS_NewUCStringCopyZ(cx, mSrcRealPath.get());
-        JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));
-        Optional<JS::Handle<JS::Value>> aValue;
-        aValue.Value() = valValue;
-        mAbortableProgressPromise->NotifyProgress(aValue);
-      } else {
-        if (!mRequestParent->IsRunning())
-          return NS_OK;
-        nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(mRequestParent, mSrcRealPath);
-        NS_DispatchToMainThread(notify);
-      }
+      nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(this, mRequestParent, mSrcRealPath);
+      NS_DispatchToMainThread(notify);
       return rv;
     }
     rv = MoveDirectory(srcFile, destRealPath);
@@ -273,19 +252,8 @@ MoveTask::MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPat
       srcSubRealPath = Substring(srcSubPath,
         srcSubPath.RFind(mSrcRealPath));
 
-      if (!mRequestParent) {
-        AutoSafeJSContext cx;
-        JSString* strValue = JS_NewUCStringCopyZ(cx, srcSubRealPath.get());
-        JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));
-        Optional<JS::Handle<JS::Value>> aValue;
-        aValue.Value() = valValue;
-        mAbortableProgressPromise->NotifyProgress(aValue);
-      } else {
-        if (!mRequestParent->IsRunning())
-          return NS_OK;
-        nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(mRequestParent, srcSubRealPath);
-        NS_DispatchToMainThread(notify);
-      }
+      nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(this, mRequestParent, srcSubRealPath);
+      NS_DispatchToMainThread(notify);
 
       rv = subFile->MoveTo(destFile, destName);
       if (NS_FAILED(rv)) {
@@ -340,7 +308,7 @@ MoveTask::HandlerCallback()
 }
 
 void
-MoveTask::HandlerNotify(const FileSystemResponseValue& aValue)
+MoveTask::HandlerNotify(const FileSystemResponseValue& aValue) const
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   FileSystemDirectoryResponse r = aValue;

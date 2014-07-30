@@ -196,11 +196,6 @@ RemoveTask::HandlerCallback()
 }
 
 void
-RemoveTask::HandlerNotify(const FileSystemResponseValue& aValue)
-{
-}
-
-void
 RemoveTask::GetPermissionAccessType(nsCString& aAccess) const
 {
   aAccess.AssignLiteral("write");

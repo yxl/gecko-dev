@@ -154,6 +154,13 @@ public:
   virtual void
   GetPermissionAccessType(nsCString& aAccess) const = 0;
 
+  /*
+   * This function will be called to pass the task notify to the content page.
+   * Override this function to handle the call back to the content page.
+   */
+  virtual void
+  HandlerNotify(const FileSystemResponseValue& aValue) const;
+
   NS_DECL_NSIRUNNABLE
 protected:
   /*
@@ -187,13 +194,6 @@ protected:
    */
   virtual void
   HandlerCallback() = 0;
-
-  /*
-   * This function will be called to pass the task notify to the content page.
-   * Override this function to handle the call back to the content page.
-   */
-  virtual void
-  HandlerNotify(const FileSystemResponseValue& aValue) = 0;
 
   /*
    * Wrap the task parameter to FileSystemParams for sending it through IPC.

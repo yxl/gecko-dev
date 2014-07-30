@@ -178,6 +178,11 @@ FileSystemTaskBase::RecvNotify(const FileSystemResponseValue& aValue)
   return true;
 }
 
+void
+FileSystemTaskBase::HandlerNotify(const FileSystemResponseValue& aValue) const
+{
+}
+
 BlobParent*
 FileSystemTaskBase::GetBlobParent(nsIDOMFile* aFile) const
 {

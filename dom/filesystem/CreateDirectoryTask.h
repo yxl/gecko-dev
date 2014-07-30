@@ -50,8 +50,6 @@ protected:
   virtual void
   HandlerCallback() MOZ_OVERRIDE;
 
-  virtual void
-  HandlerNotify(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
 private:
   nsRefPtr<Promise> mPromise;
   nsString mTargetRealPath;
