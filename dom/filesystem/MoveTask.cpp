@@ -198,14 +198,18 @@ MoveTask::Work()
   nsString destName;
   rv = destFile->GetLeafName(destName);
   if (isFile) {
-    nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(this, mRequestParent, mSrcRealPath);
+    MutexAutoLock lock(mMutex);
+    mProgressFiles.AppendElement(mSrcRealPath);
+    nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(this);
     NS_DispatchToMainThread(notify);
 
     rv = srcFile->MoveTo(destParent, destName);
   } else if (isDirectory) {
     rv = srcFile->RenameTo(destParent, destName);
     if (NS_ERROR_FILE_ACCESS_DENIED != rv) {
-      nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(this, mRequestParent, mSrcRealPath);
+      MutexAutoLock lock(mMutex);
+      mProgressFiles.AppendElement(mSrcRealPath);
+      nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(this);
       NS_DispatchToMainThread(notify);
       return rv;
     }
@@ -251,8 +255,9 @@ MoveTask::MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPat
       nsString srcSubRealPath;
       srcSubRealPath = Substring(srcSubPath,
         srcSubPath.RFind(mSrcRealPath));
-
-      nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(this, mRequestParent, srcSubRealPath);
+      MutexAutoLock lock(mMutex);
+      mProgressFiles.AppendElement(srcSubRealPath);
+      nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(this);
       NS_DispatchToMainThread(notify);
 
       rv = subFile->MoveTo(destFile, destName);
@@ -308,11 +313,24 @@ MoveTask::HandlerCallback()
 }
 
 void
-MoveTask::HandlerNotify(const FileSystemResponseValue& aValue) const
+MoveTask::HandlerNotify()
 {
-  MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
-  FileSystemDirectoryResponse r = aValue;
-  nsString realPath = r.realPath();
+  if (mRequestParent) {
+    if (mRequestParent->IsRunning())
+      unused << mRequestParent->SendNotify();
+  } else {
+    NotifyProgress();
+  }
+}
+
+void
+MoveTask::NotifyProgress()
+{
+  if (mProgressFiles.IsEmpty())
+    return;
+  MutexAutoLock lock(mMutex);
+  nsString realPath = mProgressFiles[0];
+  mProgressFiles.RemoveElementAt(0);
   AutoSafeJSContext cx;
   JSString* strValue = JS_NewUCStringCopyZ(cx, realPath.get());
   JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));

@@ -15,8 +15,7 @@
 #include "nsIFile.h"
 #include "nsISimpleEnumerator.h"
 #include "nsStringGlue.h"
-
-using mozilla::MonitorAutoLock;
+#include "FileSystemNotifyBase.h"
 
 namespace mozilla {
 namespace dom {
@@ -149,7 +148,6 @@ EnumerateTask::Work()
     rv = EnumerateDirectory(file);
     mQueue.RemoveElementAt(0);
   }
-  MonitorAutoUnlock unlockMonitor(mMonitor);
   return rv;
 }
 
@@ -161,7 +159,7 @@ EnumerateTask::EnumerateDirectory(nsCOMPtr<nsIFile> aSrcFile)
   rv = aSrcFile->GetDirectoryEntries(getter_AddRefs(enumerator));
   if (NS_FAILED(rv))
     return rv;
-  nsAutoTArray<nsCOMPtr<nsIFile>, 10> queue;
+
   bool more;
   while (NS_SUCCEEDED((rv = enumerator->HasMoreElements(&more))) && more && !mAbort) {
     nsCOMPtr<nsISupports> next;
@@ -183,20 +181,19 @@ EnumerateTask::EnumerateDirectory(nsCOMPtr<nsIFile> aSrcFile)
       nsString srcSubRealPath;
       srcSubRealPath = Substring(srcSubPath,
         srcSubPath.RFind(mTargetRealPath));
-      queue.AppendElement(subFile);
+      mProgressQueue.AppendElement(subFile);
     } else {
-      queue.AppendElement(subFile);
+      mProgressQueue.AppendElement(subFile);
       if (mRecursive)
-        mQueue.AppendElement(subFile);
+        mProgressQueue.AppendElement(subFile);
     }
   }
   if (mAbort) {
     rv = NS_ERROR_ABORT;
   }
-/*
-  notify = new FileSystemNotifyBase(this, mRequestParent, srcSubRealPath);
+  nsRefPtr<FileSystemNotifyBase> notify = new FileSystemNotifyBase(this);
   NS_DispatchToMainThread(notify);
-  */
+
   return rv;
 }
 
@@ -242,9 +239,18 @@ EnumerateTask::HandlerCallback()
 }
 
 void
-EnumerateTask::HandlerNotify(const FileSystemResponseValue& aValue) const
+EnumerateTask::HandlerNotify()
 {
-  MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
+  if (mRequestParent) {
+    if (mRequestParent->IsRunning())
+      unused << mRequestParent->SendNotify();
+  } else {
+    NotifyProgress();
+  }
+}
+
+void EnumerateTask::NotifyProgress()
+{
 /*  AutoSafeJSContext cx;
   JSString* strValue = JS_NewUCStringCopyZ(cx, aValue.get());
   JS::Rooted<JS::Value> valValue(cx, STRING_TO_JSVAL(strValue));

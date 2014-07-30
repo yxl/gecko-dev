@@ -10,12 +10,10 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/ipc/Blob.h"
 #include "mozilla/dom/FileSystemRequestParent.h"
-#include "FileSystemTaskBase.h"
 
 namespace mozilla {
 namespace dom {
 
-class DOMFileImpl;
 class FileSystemTaskBase;
 
 class FileSystemNotifyBase MOZ_FINAL
@@ -27,16 +25,7 @@ public:
   /*
    * To create a task to handle the page content request.
    */
-  FileSystemNotifyBase(FileSystemTaskBase* aTask,
-                       FileSystemRequestParent* aParent,
-                       const nsString& aNotifyString);
-
-  /*
-   * To create a task to handle the page content request.
-   */
-  FileSystemNotifyBase(FileSystemTaskBase* aTask,
-                       FileSystemRequestParent* aParent,
-                       nsRefPtr<DOMFileImpl>& aNotifyFileImpl);
+  FileSystemNotifyBase(FileSystemTaskBase* aTask);
 
   virtual
   ~FileSystemNotifyBase();
@@ -44,9 +33,6 @@ public:
   NS_DECL_NSIRUNNABLE
 private:
   nsRefPtr<FileSystemTaskBase> mTask;
-  nsString mNotifyString;
-  nsRefPtr<DOMFileImpl> mNotifyFileImpl;
-  
 };
 
 } // namespace dom

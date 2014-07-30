@@ -61,7 +61,10 @@ protected:
   HandlerCallback() MOZ_OVERRIDE;
 
   virtual void
-  HandlerNotify(const FileSystemResponseValue& aValue) const MOZ_OVERRIDE;
+  HandlerNotify() MOZ_OVERRIDE;
+
+  void
+  NotifyProgress() MOZ_OVERRIDE;
 
   nsresult MoveDirectory(nsCOMPtr<nsIFile> aSrcFile, const nsAString& destRealPath);
 private:
@@ -76,6 +79,7 @@ private:
   nsRefPtr<DOMFileImpl> mSrcFileImpl;
   nsString mDestDirectory;
   nsString mDestName;
+  nsTArray<nsString> mProgressFiles;
 };
 
 } // namespace dom

@@ -60,7 +60,10 @@ protected:
   HandlerCallback() MOZ_OVERRIDE;
 
   virtual void
-  HandlerNotify(const FileSystemResponseValue& aValue) const MOZ_OVERRIDE;
+  HandlerNotify() MOZ_OVERRIDE;
+
+  virtual void
+  NotifyProgress() MOZ_OVERRIDE;
 
   nsresult EnumerateDirectory(nsCOMPtr<nsIFile> aSrcFile);
 private:
@@ -73,6 +76,7 @@ private:
   bool mRecursive;
   bool mReturnValue;
   nsAutoTArray<nsCOMPtr<nsIFile>, 10> mQueue;
+  nsAutoTArray<nsCOMPtr<nsIFile>, 10> mProgressQueue;
 };
 
 } // namespace dom

@@ -26,6 +26,7 @@ FileSystemTaskBase::FileSystemTaskBase(FileSystemBase* aFileSystem)
   , mFileSystem(aFileSystem)
   , mAbort(false)
   , mMonitor("FileSystemTaskBase::mMonitor")
+  , mMutex("FileSystemTaskBase::mMutex")
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   MOZ_ASSERT(aFileSystem, "aFileSystem should not be null.");
@@ -39,6 +40,7 @@ FileSystemTaskBase::FileSystemTaskBase(FileSystemBase* aFileSystem,
   , mRequestParent(aParent)
   , mAbort(false)
   , mMonitor("FileSystemTaskBase::mMonitor")
+  , mMutex("FileSystemTaskBase::mMutex")
 {
   MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
              "Only call from parent process!");
@@ -172,14 +174,19 @@ FileSystemTaskBase::Recv__delete__(const FileSystemResponseValue& aValue)
 }
 
 bool
-FileSystemTaskBase::RecvNotify(const FileSystemResponseValue& aValue)
+FileSystemTaskBase::RecvNotify()
 {
-  HandlerNotify(aValue);
+  NotifyProgress();
   return true;
 }
 
 void
-FileSystemTaskBase::HandlerNotify(const FileSystemResponseValue& aValue) const
+FileSystemTaskBase::HandlerNotify()
+{
+}
+
+void
+FileSystemTaskBase::NotifyProgress()
 {
 }
 

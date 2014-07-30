@@ -9,28 +9,15 @@
 #include "mozilla/unused.h"
 #include "nsDOMFile.h"
 #include "FileSystemNotifyBase.h"
+#include "FileSystemTaskBase.h"
 
 using mozilla::MonitorAutoLock;
 
 namespace mozilla {
 namespace dom {
 
-FileSystemNotifyBase::FileSystemNotifyBase(FileSystemTaskBase* aTask,
-                                           FileSystemRequestParent* aParent,
-                                           const nsString& aNotifyString)
-  : mRequestParent(aParent)
-  , mTask(aTask)
-  , mNotifyString(aNotifyString)
-{
-  MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
-}
-
-FileSystemNotifyBase::FileSystemNotifyBase(FileSystemTaskBase* aTask,
-                                           FileSystemRequestParent* aParent,
-                                           nsRefPtr<DOMFileImpl>& aNotifyFileImpl)
-  : mRequestParent(aParent)
-  , mTask(aTask)
-  , mNotifyFileImpl(aNotifyFileImpl)
+FileSystemNotifyBase::FileSystemNotifyBase(FileSystemTaskBase* aTask)
+  : mTask(aTask)
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
 }
@@ -43,35 +30,8 @@ NS_IMETHODIMP
 FileSystemNotifyBase::Run()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
-  if (mNotifyFileImpl) {
-    FileSystemFileResponse r;
-    nsRefPtr<DOMFile> aFile = new DOMFile(mNotifyFileImpl);
-    
-    // Load the lazy dom file data from the parent before sending to the child.
-    nsString mimeType;
-    aFile->GetType(mimeType);
-    uint64_t fileSize;
-    aFile->GetSize(&fileSize);
-    uint64_t lastModifiedDate;
-    aFile->GetMozLastModifiedDate(&lastModifiedDate);
-    ContentParent* cp = static_cast<ContentParent*>(mRequestParent->Manager());
-    r.blobParent() = cp->GetOrCreateActorForBlob(aFile);
-    if (mRequestParent) {
-      if (mRequestParent->IsRunning())
-        unused << mRequestParent->SendNotify(r);
-    } else {
-      mTask->HandlerNotify(r);
-    }
-  } else {
-    FileSystemDirectoryResponse r;
-    r.realPath() = mNotifyString;
-    if (mRequestParent) {
-      if (mRequestParent->IsRunning())
-        unused << mRequestParent->SendNotify(r);
-    } else {
-      mTask->HandlerNotify(r);
-    }
-    
+  if (mTask) {
+    mTask->HandlerNotify();
   }
   return NS_OK;
 }

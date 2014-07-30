@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_FileSystemTaskBase_h
 #define mozilla_dom_FileSystemTaskBase_h
 
+#include "mozilla/Mutex.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/FileSystemRequestParent.h"
@@ -159,7 +160,10 @@ public:
    * Override this function to handle the call back to the content page.
    */
   virtual void
-  HandlerNotify(const FileSystemResponseValue& aValue) const;
+  HandlerNotify();
+
+  virtual void
+  NotifyProgress();
 
   NS_DECL_NSIRUNNABLE
 protected:
@@ -231,7 +235,7 @@ protected:
 
   // Overrides PFileSystemRequestChild
   virtual bool
-  RecvNotify(const FileSystemResponseValue& value) MOZ_OVERRIDE;
+  RecvNotify() MOZ_OVERRIDE;
 
   BlobParent*
   GetBlobParent(nsIDOMFile* aFile) const;
@@ -243,6 +247,7 @@ protected:
 
   bool mAbort;
   mozilla::Monitor mMonitor;
+  Mutex mMutex;
 private:
   /*
    * After finishing the task operation, handle the task result.
